@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ProductGrid from '@/components/ProductGrid';
 
@@ -12,13 +12,7 @@ function SearchContent() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (searchQuery) {
-      performSearch(searchQuery);
-    }
-  }, []);
-
-  const performSearch = async (query: string) => {
+  const performSearch = useCallback(async (query: string) => {
     if (!query.trim()) {
       setProducts([]);
       return;
@@ -34,7 +28,13 @@ function SearchContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (searchQuery) {
+      performSearch(searchQuery);
+    }
+  }, [searchQuery, performSearch]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

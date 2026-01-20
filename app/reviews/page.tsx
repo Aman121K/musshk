@@ -105,7 +105,7 @@ export default function ReviewsPage() {
       <div className="mt-12 text-center">
         <h2 className="text-2xl font-bold mb-4">Share Your Experience</h2>
         <p className="text-gray-600 mb-6">
-          Have you tried our perfumes? We'd love to hear from you!
+          Have you tried our perfumes? We&apos;d love to hear from you!
         </p>
         <a
           href="/contact"

@@ -9,7 +9,7 @@ export default function RefundPolicyPage() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Returns & Refunds</h2>
           <p className="text-gray-700 leading-relaxed mb-4">
-            At Musshk, we want you to be completely satisfied with your purchase. If you're not happy with your order, 
+            At Musshk, we want you to be completely satisfied with your purchase. If you&apos;re not happy with your order, 
             we offer a hassle-free return and refund process.
           </p>
         </section>
@@ -110,8 +110,8 @@ export default function RefundPolicyPage() {
           </p>
           <ul className="list-disc list-inside text-gray-700 space-y-2">
             <li>Contact us immediately if you wish to cancel</li>
-            <li>If the order hasn't been shipped, we'll process a full refund</li>
-            <li>If the order has already been shipped, you'll need to follow the return process</li>
+            <li>If the order hasn&apos;t been shipped, we&apos;ll process a full refund</li>
+            <li>If the order has already been shipped, you&apos;ll need to follow the return process</li>
           </ul>
         </section>
 

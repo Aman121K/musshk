@@ -37,12 +37,12 @@ export default function ShippingPolicyPage() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Order Processing</h2>
           <p className="text-gray-700 leading-relaxed mb-4">
-            Here's what happens after you place an order:
+            Here&apos;s what happens after you place an order:
           </p>
           <ol className="list-decimal list-inside text-gray-700 space-y-2">
-            <li><strong>Order Confirmation:</strong> You'll receive an email confirmation immediately after placing your order</li>
+            <li><strong>Order Confirmation:</strong> You&apos;ll receive an email confirmation immediately after placing your order</li>
             <li><strong>Processing:</strong> We prepare your order for shipment (usually within 24 hours)</li>
-            <li><strong>Shipping:</strong> Your order is dispatched and you'll receive a tracking number</li>
+            <li><strong>Shipping:</strong> Your order is dispatched and you&apos;ll receive a tracking number</li>
             <li><strong>Delivery:</strong> Your package arrives at your doorstep</li>
           </ol>
         </section>
