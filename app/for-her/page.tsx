@@ -30,7 +30,7 @@ export default function ForHerPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-4xl font-bold mb-4">For Her</h1>
         <p className="text-gray-600 mb-8">
-          Explore our elegant collection of women's fragrances. From floral and feminine to bold and confident, 
+          Explore our elegant collection of women&apos;s fragrances. From floral and feminine to bold and confident, 
           find the perfect scent that complements your personality.
         </p>
         <ProductGrid products={products} loading={loading} title="" />

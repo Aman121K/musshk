@@ -26,8 +26,8 @@ export default function ContactPage() {
         <div>
           <h2 className="text-2xl font-semibold mb-6">Get in Touch</h2>
           <p className="text-gray-700 mb-6">
-            Have a question or need assistance? We're here to help! Reach out to us through any of the following 
-            channels, and we'll get back to you as soon as possible.
+            Have a question or need assistance? We&apos;re here to help! Reach out to us through any of the following 
+            channels, and we&apos;ll get back to you as soon as possible.
           </p>
 
           <div className="space-y-4">

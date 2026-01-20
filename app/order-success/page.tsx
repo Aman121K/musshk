@@ -61,7 +61,7 @@ function OrderSuccessContent() {
             </div>
             <div className="mt-4 p-4 bg-green-50 rounded-lg">
               <p className="text-sm text-green-800">
-                <strong>✓ Email Confirmation Sent:</strong> We've sent a detailed order confirmation and invoice to your email address.
+                <strong>✓ Email Confirmation Sent:</strong> We&apos;ve sent a detailed order confirmation and invoice to your email address.
               </p>
             </div>
           </div>

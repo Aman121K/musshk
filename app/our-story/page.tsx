@@ -9,7 +9,7 @@ export default function OurStoryPage() {
         </p>
         
         <p className="text-gray-700 leading-relaxed mb-6 text-lg">
-          We believe every individual carries their own essence and deserves to leave a lasting impression wherever they go. Born from a vision to make luxury fragrances accessible to everyone, Musshk creates inspired versions of the world's most iconic perfumes — crafted to perfection, without compromise, and finished with a truly luxurious touch.
+          We believe every individual carries their own essence and deserves to leave a lasting impression wherever they go. Born from a vision to make luxury fragrances accessible to everyone, Musshk creates inspired versions of the world&apos;s most iconic perfumes — crafted to perfection, without compromise, and finished with a truly luxurious touch.
         </p>
         
         <p className="text-gray-700 leading-relaxed mb-6 text-lg">

@@ -211,7 +211,7 @@ export default function CartPage() {
               Proceed to Checkout
             </Link>
             <p className="text-xs text-gray-500 text-center mt-2">
-              You'll need to login or register to complete your purchase
+              You&apos;ll need to login or register to complete your purchase
             </p>
           </div>
         </div>

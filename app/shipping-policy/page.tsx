@@ -70,7 +70,7 @@ export default function ShippingPolicyPage() {
             <li>Estimated delivery date</li>
           </ul>
           <p className="text-gray-700 leading-relaxed mt-4">
-            You can track your order using the tracking number on our website or the courier company's website.
+            You can track your order using the tracking number on our website or the courier company&apos;s website.
           </p>
         </section>
 
@@ -79,9 +79,9 @@ export default function ShippingPolicyPage() {
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-4">
             <h3 className="text-xl font-semibold mb-2">What to do if:</h3>
             <ul className="list-disc list-inside text-gray-700 space-y-2">
-              <li><strong>Package is delayed:</strong> Contact us with your order number and we'll investigate</li>
+              <li><strong>Package is delayed:</strong> Contact us with your order number and we&apos;ll investigate</li>
               <li><strong>Package is damaged:</strong> Take photos and contact us immediately</li>
-              <li><strong>Wrong item received:</strong> Contact us and we'll send the correct item</li>
+              <li><strong>Wrong item received:</strong> Contact us and we&apos;ll send the correct item</li>
               <li><strong>Package not received:</strong> Check with neighbors and local post office, then contact us</li>
             </ul>
           </div>
@@ -91,7 +91,7 @@ export default function ShippingPolicyPage() {
           <h2 className="text-2xl font-semibold mb-4">Holiday Shipping</h2>
           <p className="text-gray-700 leading-relaxed">
             During holidays and peak seasons, delivery times may be extended. We recommend placing orders early to 
-            ensure timely delivery. We'll notify you of any delays via email.
+            ensure timely delivery. We&apos;ll notify you of any delays via email.
           </p>
         </section>
 
@@ -112,7 +112,7 @@ export default function ShippingPolicyPage() {
           <h2 className="text-2xl font-semibold mb-4">International Shipping</h2>
           <p className="text-gray-700 leading-relaxed">
             We currently focus on domestic shipping within India. For international orders, please contact us at 
-            <a href="mailto:Musshk09@gmail.com" className="text-primary-600 hover:underline">Musshk09@gmail.com</a> with your requirements, and we'll provide shipping options and costs.
+            <a href="mailto:Musshk09@gmail.com" className="text-primary-600 hover:underline">Musshk09@gmail.com</a> with your requirements, and we&apos;ll provide shipping options and costs.
           </p>
         </section>
 

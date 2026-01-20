@@ -112,7 +112,7 @@ export default function Testimonials() {
                     </svg>
                   ))}
                 </div>
-                <p className="text-gray-600 italic">"{testimonial.comment}"</p>
+                <p className="text-gray-600 italic">&quot;{testimonial.comment}&quot;</p>
               </div>
             ))}
           </div>

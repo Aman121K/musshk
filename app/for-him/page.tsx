@@ -30,7 +30,7 @@ export default function ForHimPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-4xl font-bold mb-4">For Him</h1>
         <p className="text-gray-600 mb-8">
-          Discover our collection of premium men's fragrances. From bold and masculine to fresh and sophisticated, 
+          Discover our collection of premium men&apos;s fragrances. From bold and masculine to fresh and sophisticated, 
           find the perfect scent that defines your style.
         </p>
         <ProductGrid products={products} loading={loading} title="" />
