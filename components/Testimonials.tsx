@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { getApiUrl, API_BASE_URL } from '@/lib/api';
 
 interface Testimonial {
   _id: string;
@@ -23,7 +22,7 @@ export default function Testimonials() {
 
   const fetchTestimonials = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/testimonials?featured=true`);
+      const response = await fetch(getApiUrl('testimonials?featured=true'));
       const data = await response.json();
       setTestimonials(data.slice(0, 4) || []);
     } catch (error) {
@@ -83,7 +82,7 @@ export default function Testimonials() {
                 <div className="flex items-center mb-4">
                   {testimonial.image ? (
                     <img
-                      src={`${API_URL}${testimonial.image}`}
+                      src={`${API_BASE_URL}${testimonial.image}`}
                       alt={testimonial.name}
                       className="w-12 h-12 rounded-full object-cover mr-4"
                     />

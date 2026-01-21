@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { getApiUrl } from '@/lib/api';
 
 export default function Header() {
   const [cartCount, setCartCount] = useState(0);
@@ -48,8 +49,7 @@ export default function Header() {
 
   const fetchCartCount = async (sessionId: string) => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${API_URL}/api/cart/${sessionId}`);
+      const response = await fetch(getApiUrl(`cart/${sessionId}`));
       const cart = await response.json();
       setCartCount(cart.items?.length || 0);
     } catch (error) {

@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { getApiUrl } from '@/lib/api';
 
 // Declare Razorpay types
 declare global {
@@ -95,7 +94,7 @@ export default function CheckoutPage() {
         return;
       }
 
-      const response = await fetch(`${API_URL}/api/cart/${sessionId}`);
+      const response = await fetch(getApiUrl(`cart/${sessionId}`));
       const data = await response.json();
       setCart(data);
 
@@ -117,7 +116,7 @@ export default function CheckoutPage() {
 
     try {
       // Create Razorpay order
-      const paymentResponse = await fetch(`${API_URL}/api/payment/create-order`, {
+      const paymentResponse = await fetch(getApiUrl('payment/create-order'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -147,7 +146,7 @@ export default function CheckoutPage() {
         order_id: paymentData.id,
         handler: async function (response: any) {
           // Verify payment
-          const verifyResponse = await fetch(`${API_URL}/api/payment/verify-payment`, {
+          const verifyResponse = await fetch(getApiUrl('payment/verify-payment'), {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -166,7 +165,7 @@ export default function CheckoutPage() {
             // Clear cart
             const sessionId = localStorage.getItem('sessionId');
             if (sessionId) {
-              await fetch(`${API_URL}/api/cart/${sessionId}`, {
+              await fetch(getApiUrl(`cart/${sessionId}`), {
                 method: 'DELETE',
               });
             }
@@ -224,7 +223,7 @@ export default function CheckoutPage() {
         orderStatus: 'Pending',
       };
 
-      const response = await fetch(`${API_URL}/api/orders`, {
+      const response = await fetch(getApiUrl('orders'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -240,7 +239,7 @@ export default function CheckoutPage() {
           await handleRazorpayPayment(order);
         } else {
           // COD - Clear cart and redirect
-          await fetch(`${API_URL}/api/cart/${sessionId}`, {
+          await fetch(getApiUrl(`cart/${sessionId}`), {
             method: 'DELETE',
           });
           router.push(`/order-success?orderId=${order._id}`);

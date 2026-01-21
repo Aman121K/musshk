@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { getApiUrl } from '@/lib/api';
 
 export default function TrackOrderPage() {
   const [orderNumber, setOrderNumber] = useState('');
@@ -15,8 +16,7 @@ export default function TrackOrderPage() {
     setOrder(null);
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${API_URL}/api/orders?orderNumber=${orderNumber}`);
+      const response = await fetch(getApiUrl(`orders?orderNumber=${orderNumber}`));
       
       if (response.ok) {
         const data = await response.json();

@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { getApiUrl } from '@/lib/api';
 
 interface CartItem {
   productId: string;
@@ -37,7 +36,7 @@ export default function CartPage() {
         return;
       }
 
-      const response = await fetch(`${API_URL}/api/cart/${sessionId}`);
+      const response = await fetch(getApiUrl(`cart/${sessionId}`));
       const data = await response.json();
       setCart(data);
     } catch (error) {
@@ -57,7 +56,7 @@ export default function CartPage() {
       const sessionId = localStorage.getItem('sessionId');
       if (!sessionId) return;
 
-      await fetch(`${API_URL}/api/cart/${sessionId}/${productId}`, {
+      await fetch(getApiUrl(`cart/${sessionId}/${productId}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -78,7 +77,7 @@ export default function CartPage() {
       const sessionId = localStorage.getItem('sessionId');
       if (!sessionId) return;
 
-      await fetch(`${API_URL}/api/cart/${sessionId}/${productId}`, {
+      await fetch(getApiUrl(`cart/${sessionId}/${productId}`), {
         method: 'DELETE',
       });
 

@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import ProductGrid from '@/components/ProductGrid';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { getApiUrl } from '@/lib/api';
 
 export default function ForHerPage() {
   const [products, setProducts] = useState([]);
@@ -15,7 +14,7 @@ export default function ForHerPage() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/products?tags=Women`);
+      const response = await fetch(getApiUrl('products?tags=Women'));
       const data = await response.json();
       setProducts(data.products || []);
     } catch (error) {

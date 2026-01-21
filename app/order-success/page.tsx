@@ -3,8 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useEffect, useState, Suspense } from 'react';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { getApiUrl } from '@/lib/api';
 
 function OrderSuccessContent() {
   const searchParams = useSearchParams();
@@ -19,7 +18,7 @@ function OrderSuccessContent() {
 
   const fetchOrder = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/orders/${orderId}`);
+      const response = await fetch(getApiUrl(`orders/${orderId}`));
       const data = await response.json();
       setOrder(data);
     } catch (error) {

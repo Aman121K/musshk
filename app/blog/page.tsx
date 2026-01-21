@@ -1,48 +1,81 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { getApiUrl, API_BASE_URL } from '@/lib/api';
+
+interface BlogPost {
+  _id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  image?: string;
+  category: string;
+  author: string;
+  published: boolean;
+  featured: boolean;
+  tags?: string[];
+  views: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function BlogPage() {
-  const blogPosts = [
-    {
-      id: 1,
-      title: 'The Art of Perfume Layering: Creating Your Signature Scent',
-      excerpt: 'Learn how to layer different fragrances to create a unique scent that represents your personality.',
-      date: 'March 15, 2025',
-      category: 'Fragrance Tips',
-    },
-    {
-      id: 2,
-      title: 'Understanding Fragrance Notes: Top, Middle, and Base',
-      excerpt: 'Discover the three layers of fragrance notes and how they work together to create a complete scent experience.',
-      date: 'March 10, 2025',
-      category: 'Education',
-    },
-    {
-      id: 3,
-      title: 'Best Perfumes for Different Seasons',
-      excerpt: 'Find out which fragrances work best for spring, summer, fall, and winter to keep you smelling great year-round.',
-      date: 'March 5, 2025',
-      category: 'Seasonal',
-    },
-    {
-      id: 4,
-      title: 'How to Make Your Perfume Last Longer',
-      excerpt: 'Simple tips and tricks to extend the longevity of your favorite fragrances throughout the day.',
-      date: 'February 28, 2025',
-      category: 'Tips & Tricks',
-    },
-    {
-      id: 5,
-      title: 'The History of Perfume: From Ancient Times to Modern Day',
-      excerpt: 'Take a journey through the fascinating history of perfumery and how it has evolved over centuries.',
-      date: 'February 20, 2025',
-      category: 'History',
-    },
-    {
-      id: 6,
-      title: 'Choosing the Right Perfume for Your Personality',
-      excerpt: 'Learn how to select fragrances that match your personality and enhance your natural style.',
-      date: 'February 15, 2025',
-      category: 'Lifestyle',
-    },
-  ];
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    // Only fetch on client side
+    if (typeof window !== 'undefined') {
+      fetchBlogs();
+    }
+  }, []);
+
+  const fetchBlogs = async () => {
+    console.log('Fetching blogs from:', API_BASE_URL);
+    try {
+      setLoading(true);
+      setError('');
+      // Fetch only published blogs
+      const apiUrl = getApiUrl('blogs?published=true');
+      console.log('Fetching blogs from:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      console.log('Blog API Response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Blog API Error Response:', errorText);
+        throw new Error(`Failed to fetch blogs: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Blog API Data received:', data);
+      setBlogPosts(Array.isArray(data) ? data : []);
+    } catch (error: any) {
+      console.error('Error fetching blogs:', error);
+      setError(`Failed to load blog posts: ${error.message || 'Please try again later.'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -51,32 +84,87 @@ export default function BlogPage() {
         Discover the latest trends, tips, and insights about perfumes and fragrances.
       </p>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {blogPosts.map((post) => (
-          <article
-            key={post.id}
-            className="bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
-          >
-            <div className="h-48 bg-gradient-to-br from-primary-100 to-primary-300 flex items-center justify-center">
-              <span className="text-4xl">✨</span>
-            </div>
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-primary-600 uppercase">{post.category}</span>
-                <span className="text-xs text-gray-500">{post.date}</span>
+      {loading ? (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="bg-white border rounded-lg overflow-hidden animate-pulse">
+              <div className="h-48 bg-gray-200"></div>
+              <div className="p-6">
+                <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
+                <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-5/6"></div>
               </div>
-              <h2 className="text-xl font-bold mb-3 text-gray-900">{post.title}</h2>
-              <p className="text-gray-600 mb-4 line-clamp-3">{post.excerpt}</p>
-              <a
-                href={`/blog/${post.id}`}
-                className="text-primary-600 font-semibold hover:text-primary-700 transition"
-              >
-                Read More →
-              </a>
             </div>
-          </article>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : error ? (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <p className="text-red-700 mb-4">{error}</p>
+          <button
+            onClick={fetchBlogs}
+            className="bg-primary-600 text-white px-6 py-2 rounded-md hover:bg-primary-700 transition"
+          >
+            Try Again
+          </button>
+        </div>
+      ) : blogPosts.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-600 mb-4">No blog posts available at the moment.</p>
+          <p className="text-gray-500 text-sm">Check back soon for new content!</p>
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {blogPosts.map((post) => (
+            <article
+              key={post._id}
+              className="bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
+            >
+              {post.image ? (
+                <div className="h-48 bg-gray-100 overflow-hidden">
+                  <img
+                    src={post.image.startsWith('http') ? post.image : `${API_BASE_URL}${post.image}`}
+                    alt={post.title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/placeholder-image.jpg';
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="h-48 bg-gradient-to-br from-primary-100 to-primary-300 flex items-center justify-center">
+                  <span className="text-4xl">✨</span>
+                </div>
+              )}
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-primary-600 uppercase">
+                    {post.category}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {formatDate(post.createdAt)}
+                  </span>
+                </div>
+                <h2 className="text-xl font-bold mb-3 text-gray-900">{post.title}</h2>
+                <p className="text-gray-600 mb-4 line-clamp-3">{post.excerpt}</p>
+                <div className="flex items-center justify-between">
+                  <Link
+                    href={`/blog/${post.slug}`}
+                    className="text-primary-600 font-semibold hover:text-primary-700 transition"
+                  >
+                    Read More →
+                  </Link>
+                  {post.views > 0 && (
+                    <span className="text-xs text-gray-500">
+                      {post.views} {post.views === 1 ? 'view' : 'views'}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -3,8 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ProductGrid from '@/components/ProductGrid';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { getApiUrl } from '@/lib/api';
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -20,7 +19,7 @@ function SearchContent() {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/products?search=${encodeURIComponent(query)}`);
+      const response = await fetch(getApiUrl(`products?search=${encodeURIComponent(query)}`));
       const data = await response.json();
       setProducts(data.products || []);
     } catch (error) {

@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { getApiUrl, API_BASE_URL } from '@/lib/api';
 
 interface Product {
   _id: string;
@@ -45,7 +44,7 @@ export default function ProductDetailPage() {
 
   const fetchProduct = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/products/${params.slug}`);
+      const response = await fetch(getApiUrl(`products/${params.slug}`));
       const data = await response.json();
       setProduct(data);
       if (data.sizes && data.sizes.length > 0) {
@@ -53,7 +52,7 @@ export default function ProductDetailPage() {
       }
       
       // Fetch related products
-      const relatedResponse = await fetch(`${API_URL}/api/products?category=${data.category}&limit=4`);
+      const relatedResponse = await fetch(getApiUrl(`products?category=${data.category}&limit=4`));
       const relatedData = await relatedResponse.json();
       setRelatedProducts(relatedData.products?.filter((p: Product) => p._id !== data._id) || []);
     } catch (error) {
@@ -73,7 +72,7 @@ export default function ProductDetailPage() {
       const sizeData = product.sizes?.find(s => s.size === selectedSize);
       const price = sizeData?.price || product.price;
 
-      const response = await fetch(`${API_URL}/api/cart/${sessionId}`, {
+      const response = await fetch(getApiUrl(`cart/${sessionId}`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -136,7 +135,7 @@ export default function ProductDetailPage() {
           <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
             {product.images && product.images.length > 0 ? (
               <img
-                src={product.images[0].startsWith('http') ? product.images[0] : `${API_URL}${product.images[0]}`}
+                src={product.images[0].startsWith('http') ? product.images[0] : `${API_BASE_URL}${product.images[0]}`}
                 alt={product.name}
                 className="w-full h-full object-cover"
                 onError={(e) => {
@@ -154,7 +153,7 @@ export default function ProductDetailPage() {
               {product.images.slice(1, 5).map((image, index) => (
                 <div key={index} className="aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-75 transition">
                   <img 
-                    src={image.startsWith('http') ? image : `${API_URL}${image}`} 
+                    src={image.startsWith('http') ? image : `${API_BASE_URL}${image}`} 
                     alt={`${product.name} ${index + 2}`} 
                     className="w-full h-full object-cover"
                     onError={(e) => {

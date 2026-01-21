@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { getApiUrl, API_BASE_URL } from '@/lib/api';
 
 interface Product {
   _id: string;
@@ -25,7 +26,6 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [cartQuantity, setCartQuantity] = useState(0);
   const [isUpdating, setIsUpdating] = useState(false);
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
   useEffect(() => {
     checkCartQuantity();
@@ -45,7 +45,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         return;
       }
 
-      const response = await fetch(`${API_URL}/api/cart/${sessionId}`);
+      const response = await fetch(getApiUrl(`cart/${sessionId}`));
       const cart = await response.json();
       const cartItem = cart.items?.find((item: any) => item.productId === product._id);
       setCartQuantity(cartItem?.quantity || 0);
@@ -62,7 +62,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       const sessionId = localStorage.getItem('sessionId') || 'session_' + Date.now();
       localStorage.setItem('sessionId', sessionId);
 
-      const response = await fetch(`${API_URL}/api/cart/${sessionId}`, {
+      const response = await fetch(getApiUrl(`cart/${sessionId}`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -104,7 +104,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       const sessionId = localStorage.getItem('sessionId');
       if (!sessionId) return;
 
-      const response = await fetch(`${API_URL}/api/cart/${sessionId}/${product._id}`, {
+      const response = await fetch(getApiUrl(`cart/${sessionId}/${product._id}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -132,7 +132,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       const sessionId = localStorage.getItem('sessionId');
       if (!sessionId) return;
 
-      const response = await fetch(`${API_URL}/api/cart/${sessionId}/${product._id}`, {
+      const response = await fetch(getApiUrl(`cart/${sessionId}/${product._id}`), {
         method: 'DELETE',
       });
 
@@ -155,7 +155,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           <div className="relative aspect-square bg-gray-100 overflow-hidden">
             {product.images && product.images.length > 0 ? (
               <img
-                src={product.images[0].startsWith('http') ? product.images[0] : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}${product.images[0]}`}
+                src={product.images[0].startsWith('http') ? product.images[0] : `${API_BASE_URL}${product.images[0]}`}
                 alt={product.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 onError={(e) => {
