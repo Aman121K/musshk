@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getApiUrl } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
+import { useModal } from '@/hooks/useModal';
 
 // Declare Razorpay types
 declare global {
@@ -13,7 +15,7 @@ declare global {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const [cart, setCart] = useState({ items: [], total: 0 });
+  const [cart, setCart] = useState<any>({ items: [], total: 0, _id: null });
   const [user, setUser] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -30,6 +32,8 @@ export default function CheckoutPage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<'COD' | 'Online'>('COD');
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+  const { showToast, ToastComponent } = useToast();
+  const { showModal, ModalComponent } = useModal();
 
   useEffect(() => {
     checkAuth();
@@ -97,6 +101,12 @@ export default function CheckoutPage() {
       const response = await fetch(getApiUrl(`cart/${sessionId}`));
       const data = await response.json();
       setCart(data);
+      
+      // If cart doesn't have _id, it's from old in-memory system
+      if (!data._id && data.items && data.items.length > 0) {
+        // Migrate to database - this is a fallback
+        console.warn('Cart not in database, may need migration');
+      }
 
       if (data.items.length === 0) {
         router.push('/cart');
@@ -108,14 +118,14 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleRazorpayPayment = async (order: any) => {
+  const handleRazorpayPayment = async (cartId: string) => {
     if (!razorpayLoaded) {
-      alert('Payment gateway is loading. Please wait...');
+      showToast('Payment gateway is loading. Please wait...', 'info');
       return;
     }
 
     try {
-      // Create Razorpay order
+      // Create Razorpay order with cartId in notes
       const paymentResponse = await fetch(getApiUrl('payment/create-order'), {
         method: 'POST',
         headers: {
@@ -123,10 +133,10 @@ export default function CheckoutPage() {
         },
         body: JSON.stringify({
           amount: cart.total,
-          receipt: order.orderNumber,
+          receipt: `cart_${cartId}`,
+          cartId: cartId,
           notes: {
-            orderId: order._id,
-            orderNumber: order.orderNumber,
+            cartId: cartId,
           },
         }),
       });
@@ -134,7 +144,17 @@ export default function CheckoutPage() {
       const paymentData = await paymentResponse.json();
 
       if (!paymentResponse.ok) {
-        throw new Error(paymentData.error || 'Failed to initialize payment');
+        const errorMessage = paymentData.error || 'Failed to initialize payment';
+        showModal(
+          errorMessage,
+          { 
+            type: 'error', 
+            title: 'Payment Error',
+            confirmText: 'OK'
+          }
+        );
+        setSubmitting(false);
+        return;
       }
 
       const options = {
@@ -142,10 +162,10 @@ export default function CheckoutPage() {
         amount: paymentData.amount,
         currency: paymentData.currency,
         name: 'Musshk',
-        description: `Order ${order.orderNumber}`,
+        description: `Cart ${cartId.slice(-8)}`,
         order_id: paymentData.id,
         handler: async function (response: any) {
-          // Verify payment
+          // Verify payment (webhook will handle order creation, but we verify here too)
           const verifyResponse = await fetch(getApiUrl('payment/verify-payment'), {
             method: 'POST',
             headers: {
@@ -155,23 +175,41 @@ export default function CheckoutPage() {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
-              orderId: order._id,
+              cartId: cart._id,
             }),
           });
 
           const verifyData = await verifyResponse.json();
 
           if (verifyResponse.ok && verifyData.success) {
-            // Clear cart
+            // Clear cart (it's now converted to order)
             const sessionId = localStorage.getItem('sessionId');
             if (sessionId) {
               await fetch(getApiUrl(`cart/${sessionId}`), {
                 method: 'DELETE',
               });
             }
-            router.push(`/order-success?orderId=${order._id}`);
+            // Dispatch cart update event
+            window.dispatchEvent(new Event('cartUpdated'));
+            
+            // Redirect to order success page
+            if (verifyData.orderId) {
+              router.push(`/order-success?orderId=${verifyData.orderId}`);
+            } else {
+              // Wait a moment for webhook to process, then redirect
+              setTimeout(() => {
+                router.push(`/account`);
+              }, 2000);
+            }
           } else {
-            alert('Payment verification failed. Please contact support.');
+            showModal(
+              'Payment verification failed. Please contact support. The webhook will process your payment.',
+              { type: 'warning', title: 'Payment Verification' }
+            );
+            // Still redirect to account page - webhook will handle it
+            setTimeout(() => {
+              router.push(`/account`);
+            }, 2000);
           }
         },
         prefill: {
@@ -184,17 +222,45 @@ export default function CheckoutPage() {
         },
         modal: {
           ondismiss: function() {
-            alert('Payment cancelled. Your order has been placed with COD.');
-            router.push(`/order-success?orderId=${order._id}`);
+            // Payment cancelled - cart remains pending for potential discount campaigns
+            showModal(
+              'Payment cancelled. Your cart is saved. You can try again later or contact support for assistance.',
+              { type: 'info', title: 'Payment Cancelled' }
+            );
           },
         },
       };
 
       const razorpay = new window.Razorpay(options);
+      
+      // Handle Razorpay errors
+      razorpay.on('payment.failed', function (response: any) {
+        showModal(
+          `Payment failed: ${response.error.description || 'Please try again or contact support.'}`,
+          { type: 'error', title: 'Payment Failed' }
+        );
+        setSubmitting(false);
+      });
+
       razorpay.open();
     } catch (error: any) {
       console.error('Payment error:', error);
-      alert(error.message || 'Payment initialization failed. Please try again.');
+      const errorMessage = error.message || 'Payment initialization failed. Please try again.';
+      
+      // Check if it's a configuration error
+      if (errorMessage.includes('not configured') || errorMessage.includes('RAZORPAY')) {
+        showModal(
+          errorMessage,
+          { 
+            type: 'error', 
+            title: 'Payment Gateway Error',
+            confirmText: 'OK'
+          }
+        );
+      } else {
+        showToast(errorMessage, 'error');
+      }
+      setSubmitting(false);
     }
   };
 
@@ -206,51 +272,85 @@ export default function CheckoutPage() {
       const sessionId = localStorage.getItem('sessionId');
       if (!sessionId) return;
 
-      const orderData = {
-        user: user.id, // Link order to user
-        items: cart.items.map((item: any) => ({
-          product: item.productId,
-          name: item.name,
-          size: item.size,
-          quantity: item.quantity,
-          price: item.price,
-        })),
-        totalAmount: cart.total,
-        email: formData.email,
-        shippingAddress: formData,
-        paymentMethod: paymentMethod,
-        paymentStatus: paymentMethod === 'COD' ? 'Pending' : 'Pending',
-        orderStatus: 'Pending',
-      };
+      if (!cart._id) {
+        showModal(
+          'Cart not found. Please add items to cart first.',
+          { type: 'warning', title: 'Cart Empty' }
+        );
+        setTimeout(() => router.push('/cart'), 2000);
+        return;
+      }
 
-      const response = await fetch(getApiUrl('orders'), {
-        method: 'POST',
+      // Update cart with checkout information
+      const checkoutResponse = await fetch(getApiUrl(`cart/${sessionId}/checkout`), {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(orderData),
+        body: JSON.stringify({
+          shippingAddress: formData,
+          paymentMethod: paymentMethod,
+          userId: user.id,
+        }),
       });
 
-      if (response.ok) {
-        const order = await response.json();
+      if (!checkoutResponse.ok) {
+        const errorData = await checkoutResponse.json();
+        showToast(errorData.error || 'Failed to update cart. Please try again.', 'error');
+        setSubmitting(false);
+        return;
+      }
 
-        if (paymentMethod === 'Online') {
-          // Initialize Razorpay payment
-          await handleRazorpayPayment(order);
-        } else {
-          // COD - Clear cart and redirect
+      const updatedCart = await checkoutResponse.json();
+
+      if (paymentMethod === 'Online') {
+        // Initialize Razorpay payment with cartId
+        await handleRazorpayPayment(updatedCart._id);
+      } else {
+        // COD - Convert cart to order immediately
+        const orderResponse = await fetch(getApiUrl('orders'), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            user: user.id,
+            items: cart.items.map((item: any) => ({
+              product: item.productId,
+              name: item.name,
+              size: item.size,
+              quantity: item.quantity,
+              price: item.price,
+            })),
+            totalAmount: cart.total,
+            email: formData.email,
+            shippingAddress: formData,
+            paymentMethod: 'COD',
+            paymentStatus: 'Pending',
+            orderStatus: 'Processing',
+          }),
+        });
+
+        if (orderResponse.ok) {
+          const order = await orderResponse.json();
+          
+          // Update cart status to converted
           await fetch(getApiUrl(`cart/${sessionId}`), {
             method: 'DELETE',
           });
+          
+          // Dispatch cart update event
+          window.dispatchEvent(new Event('cartUpdated'));
+          
           router.push(`/order-success?orderId=${order._id}`);
+        } else {
+          const errorData = await orderResponse.json();
+          showToast(errorData.error || 'Failed to create order. Please try again.', 'error');
         }
-      } else {
-        const errorData = await response.json();
-        alert(errorData.error || 'Failed to place order. Please try again.');
       }
     } catch (error) {
-      console.error('Error placing order:', error);
-      alert('Failed to place order. Please try again.');
+      console.error('Error processing checkout:', error);
+      showToast('Failed to process checkout. Please try again.', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -456,6 +556,9 @@ export default function CheckoutPage() {
           </div>
         </div>
       </form>
+
+      <ToastComponent />
+      <ModalComponent />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useToast } from '@/hooks/useToast';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -10,11 +11,12 @@ export default function ContactPage() {
     subject: '',
     message: '',
   });
+  const { showToast, ToastComponent } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Handle form submission here
-    alert('Thank you for contacting us! We will get back to you soon.');
+    showToast('Thank you for contacting us! We will get back to you soon.', 'success');
     setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
   };
 
@@ -141,6 +143,8 @@ export default function ContactPage() {
           </form>
         </div>
       </div>
+
+      <ToastComponent />
     </div>
   );
 }

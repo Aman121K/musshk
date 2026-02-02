@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
 import { getApiUrl, API_BASE_URL } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
 
 interface Product {
   _id: string;
@@ -35,6 +36,7 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
+  const { showToast, ToastComponent } = useToast();
 
   useEffect(() => {
     if (params.slug) {
@@ -88,14 +90,14 @@ export default function ProductDetailPage() {
       });
 
       if (response.ok) {
-        alert(`Added ${quantity} item(s) to cart!`);
+        showToast(`Added ${quantity} item(s) to cart!`, 'success');
         window.dispatchEvent(new Event('cartUpdated'));
       } else {
-        alert('Failed to add product to cart');
+        showToast('Failed to add product to cart', 'error');
       }
     } catch (error) {
       console.error('Error adding to cart:', error);
-      alert('Failed to add product to cart');
+      showToast('Failed to add product to cart', 'error');
     }
   };
 
@@ -324,6 +326,8 @@ export default function ProductDetailPage() {
           </div>
         </div>
       )}
+
+      <ToastComponent />
     </div>
   );
 }

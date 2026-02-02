@@ -58,10 +58,34 @@ function OrderSuccessContent() {
               <span className="text-gray-600">Order Status:</span>
               <span className="font-semibold">{order.orderStatus}</span>
             </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Payment Status:</span>
+              <span className={`font-semibold ${
+                order.paymentStatus === 'Paid' ? 'text-green-600' : 
+                order.paymentStatus === 'Failed' ? 'text-red-600' : 
+                'text-yellow-600'
+              }`}>
+                {order.paymentStatus}
+              </span>
+            </div>
+            {order.paymentDetails?.razorpay_payment_id && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">Payment ID:</span>
+                <span className="font-mono text-sm">{order.paymentDetails.razorpay_payment_id}</span>
+              </div>
+            )}
             <div className="mt-4 p-4 bg-green-50 rounded-lg">
               <p className="text-sm text-green-800">
                 <strong>✓ Email Confirmation Sent:</strong> We&apos;ve sent a detailed order confirmation and invoice to your email address.
               </p>
+            </div>
+            <div className="mt-4 text-center">
+              <Link
+                href="/account"
+                className="text-primary-600 hover:text-primary-800 font-medium text-sm"
+              >
+                View All Orders →
+              </Link>
             </div>
           </div>
         </div>

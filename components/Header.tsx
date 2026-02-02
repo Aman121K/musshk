@@ -148,6 +148,12 @@ export default function Header() {
                     <p className="text-sm font-semibold">{user.name}</p>
                     <p className="text-xs text-gray-600">{user.email}</p>
                   </div>
+                  <Link
+                    href="/account"
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    My Account
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
