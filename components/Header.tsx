@@ -57,7 +57,18 @@ export default function Header() {
     }
   };
 
-  const menuItems = [
+  type SubmenuItem = {
+    name: string;
+    href: string;
+  };
+
+  type MenuItem = {
+    name: string;
+    href: string;
+    submenu?: SubmenuItem[];
+  };
+
+  const menuItems: MenuItem[] = [
     { 
       name: 'New Arrival', 
       href: '/new-arrivals', 
@@ -103,19 +114,15 @@ export default function Header() {
                 </Link>
                 {item.submenu && (
                   <div className="absolute top-full left-0 mt-2 w-48 bg-white shadow-lg rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                    {item.submenu.map((sub) => {
-                      const subName = typeof sub === 'string' ? sub : sub.name;
-                      const subHref = typeof sub === 'string' ? `${item.href}/${sub.toLowerCase().replace(/\s+/g, '-')}` : sub.href;
-                      return (
-                        <Link
-                          key={subName}
-                          href={subHref}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                          {subName}
-                        </Link>
-                      );
-                    })}
+                    {item.submenu.map((sub) => (
+                      <Link
+                        key={sub.name}
+                        href={sub.href}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        {sub.name}
+                      </Link>
+                    ))}
                   </div>
                 )}
               </div>
