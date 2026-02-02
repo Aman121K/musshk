@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import ProductGrid from '@/components/ProductGrid';
 import { getApiUrl } from '@/lib/api';
 
-export default function ShowerGelsPage() {
+export default function NicheEditionPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -14,7 +14,7 @@ export default function ShowerGelsPage() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch(getApiUrl('products?category=Shower Gel'));
+      const response = await fetch(getApiUrl('products?collection=Niche Edition'));
       const data = await response.json();
       setProducts(data.products || []);
     } catch (error) {
@@ -27,11 +27,7 @@ export default function ShowerGelsPage() {
   return (
     <div className="py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-4xl font-bold mb-4">Shower Gels</h1>
-        <p className="text-gray-600 mb-8">
-          Complete your fragrance routine with our luxurious shower gels. Infused with the same premium scents as 
-          our perfumes, these shower gels leave you feeling fresh and confident all day long.
-        </p>
+        <h1 className="text-4xl font-bold mb-8">Niche Edition</h1>
         <ProductGrid products={products} loading={loading} title="" />
       </div>
     </div>

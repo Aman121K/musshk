@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getApiUrl } from '@/lib/api';
+import { getSessionId } from '@/lib/visitorTracking';
 
 export default function LoginPage() {
   return (
@@ -31,12 +32,16 @@ function LoginContent() {
     setLoading(true);
 
     try {
+      const sessionId = getSessionId();
       const response = await fetch(getApiUrl('auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          sessionId,
+        }),
       });
 
       const data = await response.json();

@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getApiUrl } from '@/lib/api';
+import { getSessionId } from '@/lib/visitorTracking';
 
 export default function RegisterPage() {
   return (
@@ -47,6 +48,7 @@ function RegisterContent() {
     setLoading(true);
 
     try {
+      const sessionId = getSessionId();
       const response = await fetch(getApiUrl('auth/register'), {
         method: 'POST',
         headers: {
@@ -57,6 +59,7 @@ function RegisterContent() {
           email: formData.email,
           password: formData.password,
           phone: formData.phone,
+          sessionId,
         }),
       });
 

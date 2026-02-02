@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import HeroSlider from '@/components/HeroSlider';
+import Banner from '@/components/Banner';
 import CollectionSection from '@/components/CollectionSection';
 import ProductGrid from '@/components/ProductGrid';
 import Testimonials from '@/components/Testimonials';
+import MarketplaceSection from '@/components/MarketplaceSection';
 import { getApiUrl } from '@/lib/api';
 
 export default function Home() {
@@ -29,7 +30,7 @@ export default function Home() {
 
   return (
     <div>
-      <HeroSlider />
+      <Banner position="home-top" />
       <CollectionSection />
       <ProductGrid 
         title="Our Most Loved Scents" 
@@ -37,6 +38,7 @@ export default function Home() {
         loading={loading}
       />
       <Testimonials />
+      <MarketplaceSection />
     </div>
   );
 }

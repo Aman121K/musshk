@@ -57,7 +57,7 @@ export default function FAQsPage() {
     },
     {
       question: 'Do you offer gift wrapping?',
-      answer: 'Yes, we offer elegant gift wrapping for all our products. You can select this option during checkout. We also have special gift sets available for various occasions.',
+      answer: 'Yes, we offer elegant gift wrapping for all our products. You can select this option during checkout.',
     },
   ];
 

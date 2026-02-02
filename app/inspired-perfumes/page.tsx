@@ -14,7 +14,7 @@ export default function InspiredPerfumesPage() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch(getApiUrl('products?category=Inspired Perfumes'));
+      const response = await fetch(getApiUrl('products?collection=Inspired Perfumes'));
       const data = await response.json();
       setProducts(data.products || []);
     } catch (error) {

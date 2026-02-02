@@ -14,7 +14,7 @@ export default function BestSellerPage() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch(getApiUrl('products?bestSeller=true'));
+      const response = await fetch(getApiUrl('products?collection=Best Seller'));
       const data = await response.json();
       setProducts(data.products || []);
     } catch (error) {

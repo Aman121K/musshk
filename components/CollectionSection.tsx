@@ -3,13 +3,8 @@ import Link from 'next/link';
 const collections = [
   { name: 'Best Seller', href: '/best-seller', image: '/images/best-seller.jpg' },
   { name: 'Niche Edition', href: '/niche-edition', image: '/images/niche.jpg' },
-  { name: 'Luxe Edition', href: '/luxe-edition', image: '/images/luxe.jpg' },
   { name: 'Inspired Perfumes', href: '/inspired-perfumes', image: '/images/inspired.jpg' },
   { name: 'New Arrivals', href: '/new-arrivals', image: '/images/new.jpg' },
-  { name: 'Awarded by Fragrantica', href: '/awarded', image: '/images/awarded.jpg' },
-  { name: 'Gift Sets', href: '/gift-sets', image: '/images/gifting.jpg' },
-  { name: 'Celebrity Perfumes', href: '/celebrity', image: '/images/celebrity.jpg' },
-  { name: 'Shower Gel', href: '/shower-gel', image: '/images/shower.jpg' },
 ];
 
 export default function CollectionSection() {

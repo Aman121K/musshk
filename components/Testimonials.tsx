@@ -51,7 +51,7 @@ export default function Testimonials() {
           _id: '4',
           name: 'Aniket J.',
           rating: 5,
-          comment: 'The shower gels + perfumes combo is my favorite. Keeps me fresh and confident for hours!',
+          comment: 'Musshk perfumes are my favorite. Keeps me fresh and confident for hours!',
         },
       ]);
     } finally {

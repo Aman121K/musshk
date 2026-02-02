@@ -58,17 +58,22 @@ export default function Header() {
   };
 
   const menuItems = [
-    { name: 'BOGO', href: '/bogo' },
-    { name: 'New Arrival', href: '/new-arrival', submenu: ['SEPTEMBER - 2025', 'July-2025', 'MARCH- 2025'] },
+    { 
+      name: 'New Arrival', 
+      href: '/new-arrivals', 
+      submenu: [
+        { name: 'All', href: '/new-arrivals' },
+        { name: 'SEPTEMBER - 2025', href: '/new-arrivals?date=SEPTEMBER - 2025' },
+        { name: 'July-2025', href: '/new-arrivals?date=July-2025' },
+        { name: 'MARCH- 2025', href: '/new-arrivals?date=MARCH- 2025' }
+      ]
+    },
     { name: 'Niche Edition', href: '/niche-edition' },
-    { name: 'Luxe Edition', href: '/luxe-edition' },
-    { name: 'Gift Sets', href: '/gift-sets' },
     { 
       name: 'Inspired Perfumes', 
       href: '/inspired-perfumes',
-      submenu: ['All Inspired', 'Awarded By Fragrantica', 'Celebrity Perfumes']
+      submenu: [{ name: 'All Inspired', href: '/inspired-perfumes' }]
     },
-    { name: 'Lotion & Body wash', href: '/lotion-bodywash', submenu: ['Body Lotions', 'Shower Gel'] },
   ];
 
   return (
@@ -76,7 +81,7 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Top Bar */}
         <div className="bg-primary-600 text-white text-center py-2 text-sm">
-          BUY ANY 3 INSPIRED PERFUMES @ ₹2999 ONLY | FREE SHIPPING ON ORDERS ABOVE ₹999
+          Free shipping across India on all orders.
         </div>
 
         {/* Main Header */}
@@ -98,15 +103,19 @@ export default function Header() {
                 </Link>
                 {item.submenu && (
                   <div className="absolute top-full left-0 mt-2 w-48 bg-white shadow-lg rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                    {item.submenu.map((sub) => (
-                      <Link
-                        key={sub}
-                        href={`${item.href}/${sub.toLowerCase().replace(/\s+/g, '-')}`}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        {sub}
-                      </Link>
-                    ))}
+                    {item.submenu.map((sub) => {
+                      const subName = typeof sub === 'string' ? sub : sub.name;
+                      const subHref = typeof sub === 'string' ? `${item.href}/${sub.toLowerCase().replace(/\s+/g, '-')}` : sub.href;
+                      return (
+                        <Link
+                          key={subName}
+                          href={subHref}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          {subName}
+                        </Link>
+                      );
+                    })}
                   </div>
                 )}
               </div>

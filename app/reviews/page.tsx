@@ -29,7 +29,7 @@ export default function ReviewsPage() {
       name: 'Aniket J.',
       rating: 5,
       product: 'XP35 Musk Cool Water',
-      comment: 'The shower gels + perfumes combo is my favorite. Keeps me fresh and confident for hours!',
+      comment: 'Musshk perfumes are my favorite. Keeps me fresh and confident for hours!',
       date: 'March 3, 2025',
     },
     {
