@@ -38,6 +38,15 @@ export default function CartPage() {
 
       const response = await fetch(getApiUrl(`cart/${sessionId}`));
       const data = await response.json();
+      
+      // Ensure productId is always a string
+      if (data.items && Array.isArray(data.items)) {
+        data.items = data.items.map((item: any) => ({
+          ...item,
+          productId: String(item.productId || ''),
+        }));
+      }
+      
       setCart(data);
     } catch (error) {
       console.error('Error fetching cart:', error);
@@ -46,7 +55,7 @@ export default function CartPage() {
     }
   };
 
-  const updateQuantity = async (productId: string, quantity: number) => {
+  const updateQuantity = async (productId: string | any, quantity: number) => {
     if (quantity < 1) {
       removeItem(productId);
       return;
@@ -56,7 +65,10 @@ export default function CartPage() {
       const sessionId = localStorage.getItem('sessionId');
       if (!sessionId) return;
 
-      await fetch(getApiUrl(`cart/${sessionId}/${productId}`), {
+      // Ensure productId is a string
+      const productIdStr = String(productId || '');
+
+      await fetch(getApiUrl(`cart/${sessionId}/${productIdStr}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -72,14 +84,23 @@ export default function CartPage() {
     }
   };
 
-  const removeItem = async (productId: string) => {
+  const removeItem = async (productId: string | any) => {
     try {
       const sessionId = localStorage.getItem('sessionId');
       if (!sessionId) return;
 
-      await fetch(getApiUrl(`cart/${sessionId}/${productId}`), {
+      // Ensure productId is a string
+      const productIdStr = String(productId || '');
+
+      const response = await fetch(getApiUrl(`cart/${sessionId}/${productIdStr}`), {
         method: 'DELETE',
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error removing item:', errorData.error || 'Failed to remove item');
+        return;
+      }
 
       await fetchCart();
       // Update header cart count
@@ -128,9 +149,12 @@ export default function CartPage() {
       <div className="grid md:grid-cols-3 gap-8">
         <div className="md:col-span-2">
           <div className="space-y-4">
-            {cart.items.map((item) => (
+            {cart.items.map((item) => {
+              // Ensure productId is always a string for key and operations
+              const productId = String(item.productId || '');
+              return (
               <div
-                key={item.productId}
+                key={productId}
                 className="bg-white border rounded-lg p-4 flex items-center space-x-4"
               >
                 <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
@@ -156,14 +180,14 @@ export default function CartPage() {
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                      onClick={() => updateQuantity(productId, item.quantity - 1)}
                       className="w-8 h-8 border rounded-md flex items-center justify-center hover:bg-gray-50"
                     >
                       -
                     </button>
                     <span className="w-8 text-center">{item.quantity}</span>
                     <button
-                      onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                      onClick={() => updateQuantity(productId, item.quantity + 1)}
                       className="w-8 h-8 border rounded-md flex items-center justify-center hover:bg-gray-50"
                     >
                       +
@@ -171,7 +195,7 @@ export default function CartPage() {
                   </div>
 
                   <button
-                    onClick={() => removeItem(item.productId)}
+                    onClick={() => removeItem(productId)}
                     className="text-red-500 hover:text-red-700"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -180,7 +204,8 @@ export default function CartPage() {
                   </button>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         </div>
 

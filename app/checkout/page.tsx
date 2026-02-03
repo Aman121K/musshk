@@ -320,6 +320,7 @@ export default function CheckoutPage() {
         await handleRazorpayPayment(updatedCart._id);
       } else {
         // COD - Convert cart to order immediately
+        // Use updatedCart items instead of cart items
         const orderResponse = await fetch(getApiUrl('orders'), {
           method: 'POST',
           headers: {
@@ -327,14 +328,14 @@ export default function CheckoutPage() {
           },
           body: JSON.stringify({
             user: user.id,
-            items: cart.items.map((item: any) => ({
-              product: item.productId,
+            items: updatedCart.items.map((item: any) => ({
+              product: item.productId, // productId is already a string from API response
               name: item.name,
               size: item.size,
               quantity: item.quantity,
               price: item.price,
             })),
-            totalAmount: cart.total,
+            totalAmount: updatedCart.total || cart.total,
             email: formData.email,
             shippingAddress: formData,
             paymentMethod: 'COD',

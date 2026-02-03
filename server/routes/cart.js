@@ -2,41 +2,16 @@ const express = require('express');
 const router = express.Router();
 const Cart = require('../models/Cart');
 
-// Admin: Get all pending carts (must come before /:sessionId route)
-router.get('/admin/pending', async (req, res) => {
-  try {
-    const carts = await Cart.find({ status: 'pending' })
-      .populate('userId', 'name email')
-      .sort({ createdAt: -1 });
-    res.json(carts);
-  } catch (error) {
-    console.error('Error fetching pending carts:', error);
-    res.status(500).json({ error: 'Failed to fetch pending carts' });
-  }
-});
-
-// Admin: Get all carts (must come before /:sessionId route)
-router.get('/admin/all', async (req, res) => {
-  try {
-    const carts = await Cart.find()
-      .populate('userId', 'name email')
-      .sort({ createdAt: -1 });
-    res.json(carts);
-  } catch (error) {
-    console.error('Error fetching all carts:', error);
-    res.status(500).json({ error: 'Failed to fetch carts' });
-  }
-});
-
 // Get cart by sessionId
 router.get('/:sessionId', async (req, res) => {
   try {
     const { sessionId } = req.params;
     
+    // Don't populate productId to keep it as ObjectId for easier comparison in other operations
     let cart = await Cart.findOne({ 
       sessionId, 
       status: { $in: ['active', 'pending'] } 
-    }).populate('items.productId');
+    });
 
     if (!cart) {
       // Return empty cart structure
@@ -52,7 +27,20 @@ router.get('/:sessionId', async (req, res) => {
       await cart.save();
     }
 
-    res.json(cart);
+    // Convert productId to string for frontend compatibility
+    const cartData = cart.toObject();
+    if (cartData.items && cartData.items.length > 0) {
+      cartData.items = cartData.items.map(item => {
+        // Handle both ObjectId and string productId
+        const productIdStr = item.productId?.toString ? item.productId.toString() : String(item.productId || '');
+        return {
+          ...item,
+          productId: productIdStr,
+        };
+      });
+    }
+
+    res.json(cartData);
   } catch (error) {
     console.error('Error fetching cart:', error);
     res.status(500).json({ error: 'Failed to fetch cart' });
@@ -111,7 +99,17 @@ router.post('/:sessionId', async (req, res) => {
     );
 
     await cart.save();
-    res.json(cart);
+    
+    // Convert productId to string for frontend compatibility
+    const cartData = cart.toObject();
+    if (cartData.items) {
+      cartData.items = cartData.items.map(item => ({
+        ...item,
+        productId: item.productId.toString(),
+      }));
+    }
+    
+    res.json(cartData);
   } catch (error) {
     console.error('Error adding to cart:', error);
     res.status(500).json({ error: 'Failed to add item to cart' });
@@ -164,7 +162,17 @@ router.put('/:sessionId/checkout', async (req, res) => {
 
     await cart.save();
     console.log(`[Checkout] Cart ${cart._id} updated successfully`);
-    res.json(cart);
+    
+    // Return cart with productId as string for frontend, but keep ObjectId structure for backend use
+    const cartData = cart.toObject();
+    if (cartData.items) {
+      cartData.items = cartData.items.map(item => ({
+        ...item,
+        productId: item.productId.toString(),
+      }));
+    }
+    
+    res.json(cartData);
   } catch (error) {
     console.error('[Checkout] Error updating cart for checkout:', error);
     res.status(500).json({ error: 'Failed to update cart for checkout' });
@@ -190,6 +198,7 @@ router.put('/:sessionId/:itemId', async (req, res) => {
       return res.status(404).json({ error: 'Cart not found' });
     }
 
+    // Find item by productId (ObjectId converted to string)
     const item = cart.items.find(
       item => item.productId.toString() === itemId
     );
@@ -207,7 +216,17 @@ router.put('/:sessionId/:itemId', async (req, res) => {
     );
 
     await cart.save();
-    res.json(cart);
+    
+    // Convert productId to string for frontend compatibility
+    const cartData = cart.toObject();
+    if (cartData.items) {
+      cartData.items = cartData.items.map(item => ({
+        ...item,
+        productId: item.productId.toString(),
+      }));
+    }
+    
+    res.json(cartData);
   } catch (error) {
     console.error('Error updating cart:', error);
     res.status(500).json({ error: 'Failed to update cart' });
@@ -219,18 +238,64 @@ router.delete('/:sessionId/:itemId', async (req, res) => {
   try {
     const { sessionId, itemId } = req.params;
 
+    console.log(`[Delete Item] Removing item ${itemId} from cart ${sessionId}`);
+
     const cart = await Cart.findOne({ 
       sessionId, 
       status: { $in: ['active', 'pending'] } 
     });
 
     if (!cart) {
+      console.log(`[Delete Item] Cart not found for sessionId: ${sessionId}`);
       return res.status(404).json({ error: 'Cart not found' });
     }
 
-    cart.items = cart.items.filter(
-      item => item.productId.toString() !== itemId
-    );
+    console.log(`[Delete Item] Cart has ${cart.items.length} items`);
+    console.log(`[Delete Item] Looking for productId: ${itemId}`);
+    
+    // Log all productIds before filtering for debugging
+    const allProductIds = cart.items.map(i => {
+      const pid = i.productId?.toString ? i.productId.toString() : String(i.productId || '');
+      return pid;
+    });
+    console.log(`[Delete Item] All productIds in cart:`, allProductIds);
+
+    // Find the index of the item to remove
+    let itemIndex = -1;
+    for (let i = 0; i < cart.items.length; i++) {
+      const item = cart.items[i];
+      let productIdStr;
+      if (item.productId) {
+        if (typeof item.productId === 'object' && item.productId.toString) {
+          productIdStr = item.productId.toString();
+        } else {
+          productIdStr = String(item.productId);
+        }
+      } else {
+        productIdStr = '';
+      }
+      
+      console.log(`[Delete Item] Comparing: "${productIdStr}" === "${itemId}" ? ${productIdStr === itemId}`);
+      
+      if (productIdStr === itemId) {
+        itemIndex = i;
+        console.log(`[Delete Item] Found matching item at index ${i}`);
+        break;
+      }
+    }
+
+    if (itemIndex === -1) {
+      console.log(`[Delete Item] No item found with productId: ${itemId}`);
+      return res.status(404).json({ error: 'Item not found in cart' });
+    }
+
+    // Remove the item using splice
+    cart.items.splice(itemIndex, 1);
+    
+    // Mark the items array as modified for Mongoose
+    cart.markModified('items');
+    
+    console.log(`[Delete Item] Removed item at index ${itemIndex}. Remaining items: ${cart.items.length}`);
 
     // Calculate total
     cart.total = cart.items.reduce(
@@ -239,9 +304,20 @@ router.delete('/:sessionId/:itemId', async (req, res) => {
     );
 
     await cart.save();
-    res.json(cart);
+    console.log(`[Delete Item] Cart updated successfully. New total: ${cart.total}`);
+    
+    // Convert productId to string for frontend compatibility
+    const cartData = cart.toObject();
+    if (cartData.items) {
+      cartData.items = cartData.items.map(item => ({
+        ...item,
+        productId: item.productId?.toString ? item.productId.toString() : String(item.productId || ''),
+      }));
+    }
+    
+    res.json(cartData);
   } catch (error) {
-    console.error('Error removing item:', error);
+    console.error('[Delete Item] Error removing item:', error);
     res.status(500).json({ error: 'Failed to remove item from cart' });
   }
 });
