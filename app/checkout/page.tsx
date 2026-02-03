@@ -272,10 +272,22 @@ export default function CheckoutPage() {
       const sessionId = localStorage.getItem('sessionId');
       if (!sessionId) return;
 
+      // Check if cart has items
+      if (!cart.items || cart.items.length === 0) {
+        showModal(
+          'Cart is empty. Please add items to cart first.',
+          { type: 'warning', title: 'Cart Empty' }
+        );
+        setTimeout(() => router.push('/cart'), 2000);
+        return;
+      }
+
+      // If cart has items but no _id, it means it's not saved to database yet
+      // This shouldn't happen with the new system, but handle it gracefully
       if (!cart._id) {
         showModal(
-          'Cart not found. Please add items to cart first.',
-          { type: 'warning', title: 'Cart Empty' }
+          'Cart not properly initialized. Please try adding items to cart again.',
+          { type: 'error', title: 'Cart Error' }
         );
         setTimeout(() => router.push('/cart'), 2000);
         return;

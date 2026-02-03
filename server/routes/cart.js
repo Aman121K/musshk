@@ -1,99 +1,257 @@
 const express = require('express');
 const router = express.Router();
+const Cart = require('../models/Cart');
 
-// In-memory cart storage (in production, use Redis or database)
-let carts = {};
+// Get cart by sessionId
+router.get('/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    
+    let cart = await Cart.findOne({ 
+      sessionId, 
+      status: { $in: ['active', 'pending'] } 
+    }).populate('items.productId');
 
-// Get cart
-router.get('/:sessionId', (req, res) => {
-  const { sessionId } = req.params;
-  const cart = carts[sessionId] || { items: [], total: 0 };
-  res.json(cart);
+    if (!cart) {
+      // Return empty cart structure
+      return res.json({ items: [], total: 0, _id: null });
+    }
+
+    // Calculate total if not set
+    if (cart.items.length > 0 && cart.total === 0) {
+      cart.total = cart.items.reduce(
+        (sum, item) => sum + (item.price * item.quantity),
+        0
+      );
+      await cart.save();
+    }
+
+    res.json(cart);
+  } catch (error) {
+    console.error('Error fetching cart:', error);
+    res.status(500).json({ error: 'Failed to fetch cart' });
+  }
 });
 
-// Add to cart
-router.post('/:sessionId', (req, res) => {
-  const { sessionId } = req.params;
-  const { productId, name, size, price, quantity, image } = req.body;
+// Add to cart or create new cart
+router.post('/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { productId, name, size, price, quantity, image } = req.body;
 
-  if (!carts[sessionId]) {
-    carts[sessionId] = { items: [], total: 0 };
-  }
+    if (!productId || !name || !size || !price || !quantity) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
 
-  const existingItemIndex = carts[sessionId].items.findIndex(
-    item => item.productId === productId && item.size === size
-  );
-
-  if (existingItemIndex > -1) {
-    carts[sessionId].items[existingItemIndex].quantity += quantity;
-  } else {
-    carts[sessionId].items.push({
-      productId,
-      name,
-      size,
-      price,
-      quantity,
-      image,
+    // Find or create cart
+    let cart = await Cart.findOne({ 
+      sessionId, 
+      status: { $in: ['active', 'pending'] } 
     });
+
+    if (!cart) {
+      cart = new Cart({
+        sessionId,
+        items: [],
+        total: 0,
+        status: 'active',
+      });
+    }
+
+    // Check if item already exists
+    const existingItemIndex = cart.items.findIndex(
+      item => item.productId.toString() === productId && item.size === size
+    );
+
+    if (existingItemIndex > -1) {
+      // Update quantity
+      cart.items[existingItemIndex].quantity += quantity;
+    } else {
+      // Add new item
+      cart.items.push({
+        productId,
+        name,
+        size,
+        price,
+        quantity,
+        image: image || '',
+      });
+    }
+
+    // Calculate total
+    cart.total = cart.items.reduce(
+      (sum, item) => sum + (item.price * item.quantity),
+      0
+    );
+
+    await cart.save();
+    res.json(cart);
+  } catch (error) {
+    console.error('Error adding to cart:', error);
+    res.status(500).json({ error: 'Failed to add item to cart' });
   }
-
-  carts[sessionId].total = carts[sessionId].items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
-
-  res.json(carts[sessionId]);
 });
 
-// Update cart item
-router.put('/:sessionId/:itemId', (req, res) => {
-  const { sessionId, itemId } = req.params;
-  const { quantity } = req.body;
+// Update cart item quantity
+router.put('/:sessionId/:itemId', async (req, res) => {
+  try {
+    const { sessionId, itemId } = req.params;
+    const { quantity } = req.body;
 
-  if (!carts[sessionId]) {
-    return res.status(404).json({ error: 'Cart not found' });
+    if (!quantity || quantity < 1) {
+      return res.status(400).json({ error: 'Invalid quantity' });
+    }
+
+    const cart = await Cart.findOne({ 
+      sessionId, 
+      status: { $in: ['active', 'pending'] } 
+    });
+
+    if (!cart) {
+      return res.status(404).json({ error: 'Cart not found' });
+    }
+
+    const item = cart.items.find(
+      item => item.productId.toString() === itemId
+    );
+
+    if (!item) {
+      return res.status(404).json({ error: 'Item not found in cart' });
+    }
+
+    item.quantity = quantity;
+
+    // Calculate total
+    cart.total = cart.items.reduce(
+      (sum, item) => sum + (item.price * item.quantity),
+      0
+    );
+
+    await cart.save();
+    res.json(cart);
+  } catch (error) {
+    console.error('Error updating cart:', error);
+    res.status(500).json({ error: 'Failed to update cart' });
   }
-
-  const item = carts[sessionId].items.find(item => item.productId === itemId);
-  if (!item) {
-    return res.status(404).json({ error: 'Item not found' });
-  }
-
-  item.quantity = quantity;
-  carts[sessionId].total = carts[sessionId].items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
-
-  res.json(carts[sessionId]);
 });
 
-// Remove from cart
-router.delete('/:sessionId/:itemId', (req, res) => {
-  const { sessionId, itemId } = req.params;
+// Remove item from cart
+router.delete('/:sessionId/:itemId', async (req, res) => {
+  try {
+    const { sessionId, itemId } = req.params;
 
-  if (!carts[sessionId]) {
-    return res.status(404).json({ error: 'Cart not found' });
+    const cart = await Cart.findOne({ 
+      sessionId, 
+      status: { $in: ['active', 'pending'] } 
+    });
+
+    if (!cart) {
+      return res.status(404).json({ error: 'Cart not found' });
+    }
+
+    cart.items = cart.items.filter(
+      item => item.productId.toString() !== itemId
+    );
+
+    // Calculate total
+    cart.total = cart.items.reduce(
+      (sum, item) => sum + (item.price * item.quantity),
+      0
+    );
+
+    await cart.save();
+    res.json(cart);
+  } catch (error) {
+    console.error('Error removing item:', error);
+    res.status(500).json({ error: 'Failed to remove item from cart' });
   }
-
-  carts[sessionId].items = carts[sessionId].items.filter(
-    item => item.productId !== itemId
-  );
-
-  carts[sessionId].total = carts[sessionId].items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
-
-  res.json(carts[sessionId]);
 });
 
-// Clear cart
-router.delete('/:sessionId', (req, res) => {
-  const { sessionId } = req.params;
-  delete carts[sessionId];
-  res.json({ message: 'Cart cleared' });
+// Update cart with checkout information (shipping address, payment method)
+router.put('/:sessionId/checkout', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { shippingAddress, paymentMethod, userId } = req.body;
+
+    if (!shippingAddress || !paymentMethod) {
+      return res.status(400).json({ error: 'Shipping address and payment method are required' });
+    }
+
+    const cart = await Cart.findOne({ 
+      sessionId, 
+      status: { $in: ['active', 'pending'] } 
+    });
+
+    if (!cart) {
+      return res.status(404).json({ error: 'Cart not found. Please add items to cart first.' });
+    }
+
+    if (!cart.items || cart.items.length === 0) {
+      return res.status(400).json({ error: 'Cart is empty. Please add items to cart first.' });
+    }
+
+    // Ensure cart has an _id (it should, but double-check)
+    if (!cart._id) {
+      return res.status(500).json({ error: 'Cart ID not found. Please try again.' });
+    }
+
+    // Update cart with checkout details
+    cart.shippingAddress = shippingAddress || cart.shippingAddress;
+    cart.paymentMethod = paymentMethod || cart.paymentMethod;
+    if (userId) {
+      cart.userId = userId;
+    }
+    cart.status = 'pending';
+
+    await cart.save();
+    res.json(cart);
+  } catch (error) {
+    console.error('Error updating cart for checkout:', error);
+    res.status(500).json({ error: 'Failed to update cart for checkout' });
+  }
+});
+
+// Clear/Delete cart
+router.delete('/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    
+    const cart = await Cart.findOne({ sessionId });
+    if (cart) {
+      await Cart.deleteOne({ _id: cart._id });
+    }
+    
+    res.json({ message: 'Cart cleared' });
+  } catch (error) {
+    console.error('Error clearing cart:', error);
+    res.status(500).json({ error: 'Failed to clear cart' });
+  }
+});
+
+// Admin: Get all pending carts
+router.get('/admin/pending', async (req, res) => {
+  try {
+    const carts = await Cart.find({ status: 'pending' })
+      .populate('userId', 'name email')
+      .sort({ createdAt: -1 });
+    res.json(carts);
+  } catch (error) {
+    console.error('Error fetching pending carts:', error);
+    res.status(500).json({ error: 'Failed to fetch pending carts' });
+  }
+});
+
+// Admin: Get all carts
+router.get('/admin/all', async (req, res) => {
+  try {
+    const carts = await Cart.find()
+      .populate('userId', 'name email')
+      .sort({ createdAt: -1 });
+    res.json(carts);
+  } catch (error) {
+    console.error('Error fetching all carts:', error);
+    res.status(500).json({ error: 'Failed to fetch carts' });
+  }
 });
 
 module.exports = router;
-
