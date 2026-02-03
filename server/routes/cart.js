@@ -2,6 +2,32 @@ const express = require('express');
 const router = express.Router();
 const Cart = require('../models/Cart');
 
+// Admin: Get all pending carts (must come before /:sessionId route)
+router.get('/admin/pending', async (req, res) => {
+  try {
+    const carts = await Cart.find({ status: 'pending' })
+      .populate('userId', 'name email')
+      .sort({ createdAt: -1 });
+    res.json(carts);
+  } catch (error) {
+    console.error('Error fetching pending carts:', error);
+    res.status(500).json({ error: 'Failed to fetch pending carts' });
+  }
+});
+
+// Admin: Get all carts (must come before /:sessionId route)
+router.get('/admin/all', async (req, res) => {
+  try {
+    const carts = await Cart.find()
+      .populate('userId', 'name email')
+      .sort({ createdAt: -1 });
+    res.json(carts);
+  } catch (error) {
+    console.error('Error fetching all carts:', error);
+    res.status(500).json({ error: 'Failed to fetch carts' });
+  }
+});
+
 // Get cart by sessionId
 router.get('/:sessionId', async (req, res) => {
   try {
@@ -92,6 +118,59 @@ router.post('/:sessionId', async (req, res) => {
   }
 });
 
+// Update cart with checkout information (shipping address, payment method)
+// IMPORTANT: This route must come BEFORE /:sessionId/:itemId to avoid route conflicts
+router.put('/:sessionId/checkout', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { shippingAddress, paymentMethod, userId } = req.body;
+
+    console.log(`[Checkout] Processing checkout for sessionId: ${sessionId}`);
+
+    if (!shippingAddress || !paymentMethod) {
+      return res.status(400).json({ error: 'Shipping address and payment method are required' });
+    }
+
+    const cart = await Cart.findOne({ 
+      sessionId, 
+      status: { $in: ['active', 'pending'] } 
+    });
+
+    if (!cart) {
+      console.log(`[Checkout] Cart not found for sessionId: ${sessionId}`);
+      return res.status(404).json({ error: 'Cart not found. Please add items to cart first.' });
+    }
+
+    if (!cart.items || cart.items.length === 0) {
+      console.log(`[Checkout] Cart is empty for sessionId: ${sessionId}`);
+      return res.status(400).json({ error: 'Cart is empty. Please add items to cart first.' });
+    }
+
+    // Ensure cart has an _id (it should, but double-check)
+    if (!cart._id) {
+      console.log(`[Checkout] Cart missing _id for sessionId: ${sessionId}`);
+      return res.status(500).json({ error: 'Cart ID not found. Please try again.' });
+    }
+
+    console.log(`[Checkout] Updating cart ${cart._id} with checkout details`);
+
+    // Update cart with checkout details
+    cart.shippingAddress = shippingAddress || cart.shippingAddress;
+    cart.paymentMethod = paymentMethod || cart.paymentMethod;
+    if (userId) {
+      cart.userId = userId;
+    }
+    cart.status = 'pending';
+
+    await cart.save();
+    console.log(`[Checkout] Cart ${cart._id} updated successfully`);
+    res.json(cart);
+  } catch (error) {
+    console.error('[Checkout] Error updating cart for checkout:', error);
+    res.status(500).json({ error: 'Failed to update cart for checkout' });
+  }
+});
+
 // Update cart item quantity
 router.put('/:sessionId/:itemId', async (req, res) => {
   try {
@@ -167,50 +246,6 @@ router.delete('/:sessionId/:itemId', async (req, res) => {
   }
 });
 
-// Update cart with checkout information (shipping address, payment method)
-router.put('/:sessionId/checkout', async (req, res) => {
-  try {
-    const { sessionId } = req.params;
-    const { shippingAddress, paymentMethod, userId } = req.body;
-
-    if (!shippingAddress || !paymentMethod) {
-      return res.status(400).json({ error: 'Shipping address and payment method are required' });
-    }
-
-    const cart = await Cart.findOne({ 
-      sessionId, 
-      status: { $in: ['active', 'pending'] } 
-    });
-
-    if (!cart) {
-      return res.status(404).json({ error: 'Cart not found. Please add items to cart first.' });
-    }
-
-    if (!cart.items || cart.items.length === 0) {
-      return res.status(400).json({ error: 'Cart is empty. Please add items to cart first.' });
-    }
-
-    // Ensure cart has an _id (it should, but double-check)
-    if (!cart._id) {
-      return res.status(500).json({ error: 'Cart ID not found. Please try again.' });
-    }
-
-    // Update cart with checkout details
-    cart.shippingAddress = shippingAddress || cart.shippingAddress;
-    cart.paymentMethod = paymentMethod || cart.paymentMethod;
-    if (userId) {
-      cart.userId = userId;
-    }
-    cart.status = 'pending';
-
-    await cart.save();
-    res.json(cart);
-  } catch (error) {
-    console.error('Error updating cart for checkout:', error);
-    res.status(500).json({ error: 'Failed to update cart for checkout' });
-  }
-});
-
 // Clear/Delete cart
 router.delete('/:sessionId', async (req, res) => {
   try {
@@ -225,32 +260,6 @@ router.delete('/:sessionId', async (req, res) => {
   } catch (error) {
     console.error('Error clearing cart:', error);
     res.status(500).json({ error: 'Failed to clear cart' });
-  }
-});
-
-// Admin: Get all pending carts
-router.get('/admin/pending', async (req, res) => {
-  try {
-    const carts = await Cart.find({ status: 'pending' })
-      .populate('userId', 'name email')
-      .sort({ createdAt: -1 });
-    res.json(carts);
-  } catch (error) {
-    console.error('Error fetching pending carts:', error);
-    res.status(500).json({ error: 'Failed to fetch pending carts' });
-  }
-});
-
-// Admin: Get all carts
-router.get('/admin/all', async (req, res) => {
-  try {
-    const carts = await Cart.find()
-      .populate('userId', 'name email')
-      .sort({ createdAt: -1 });
-    res.json(carts);
-  } catch (error) {
-    console.error('Error fetching all carts:', error);
-    res.status(500).json({ error: 'Failed to fetch carts' });
   }
 });
 
