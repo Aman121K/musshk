@@ -1,0 +1,32 @@
+<svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="goldGradientWhite" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#D4AF37;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#B8860B;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Stylized M with Peacock Feather -->
+  <g transform="translate(150, 60)">
+    <!-- Peacock Feather -->
+    <path d="M 0,-50 Q -5,-45 -8,-35 Q -10,-25 -8,-15 Q -5,-5 0,0 Q 5,-5 8,-15 Q 10,-25 8,-35 Q 5,-45 0,-50" 
+          fill="url(#goldGradientWhite)" stroke="#B8860B" stroke-width="0.5"/>
+    <circle cx="0" cy="-30" r="3" fill="#FFD700"/>
+    <circle cx="0" cy="-30" r="1.5" fill="#FFF"/>
+    
+    <!-- Stylized M -->
+    <path d="M -30,0 L -30,40 L -15,20 L 0,40 L 0,0 M -15,20 L 15,20" 
+          fill="url(#goldGradientWhite)" stroke="#B8860B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 0,0 L 0,40 L 15,20 L 30,40 L 30,0" 
+          fill="url(#goldGradientWhite)" stroke="#B8860B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  
+  <!-- MUSSHK Text -->
+  <text x="150" y="120" font-family="serif" font-size="32" font-weight="bold" 
+        fill="url(#goldGradientWhite)" text-anchor="middle" letter-spacing="2">MUSSHK</text>
+  
+  <!-- Tagline -->
+  <text x="150" y="145" font-family="serif" font-size="12" 
+        fill="url(#goldGradientWhite)" text-anchor="middle" letter-spacing="1" opacity="0.9">WHERE SCENT BECOMES LEGACY</text>
+</svg>

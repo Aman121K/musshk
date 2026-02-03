@@ -1,9 +1,22 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Footer() {
   return (
     <footer className="mt-20 text-white" style={{ backgroundColor: '#1a1a2e' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Logo Section */}
+        <div className="mb-8 flex justify-center">
+          <Link href="/">
+            <Image
+              src="/logo/musshk-logo-white.svg"
+              alt="MUSSHK - Where Scent Becomes Legacy"
+              width={200}
+              height={80}
+              className="h-16 w-auto"
+            />
+          </Link>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Newsletter */}
           <div className="min-w-0">

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { getApiUrl } from '@/lib/api';
 
@@ -98,8 +99,15 @@ export default function Header() {
         {/* Main Header */}
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link href="/" className="text-2xl font-bold text-gray-900">
-            Musshk™️
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/logo/musshk-logo.svg"
+              alt="MUSSHK - Where Scent Becomes Legacy"
+              width={180}
+              height={60}
+              className="h-12 w-auto"
+              priority
+            />
           </Link>
 
           {/* Desktop Navigation */}
