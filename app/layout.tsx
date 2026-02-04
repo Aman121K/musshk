@@ -11,8 +11,8 @@ export const metadata: Metadata = {
   title: "Musshk | Luxury Inspired Fragrances",
   description: "Premium quality fragrances at affordable prices. Free shipping across India on all orders.",
   icons: {
-    icon: '/favicon.svg',
-    apple: '/favicon.svg',
+    icon: '/favicon.png',
+    apple: '/favicon.png',
   },
 };
 

@@ -9,7 +9,7 @@ export default function Footer() {
         <div className="mb-8 flex justify-center">
           <Link href="/">
             <Image
-              src="/logo/musshk-logo-white.svg"
+              src="/logo/musshk.jpeg"
               alt="MUSSHK - Where Scent Becomes Legacy"
               width={200}
               height={80}

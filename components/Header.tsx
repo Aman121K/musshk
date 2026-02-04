@@ -101,7 +101,7 @@ export default function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center">
             <Image
-              src="/logo/musshk-logo.svg"
+              src="/logo/musshk.jpeg"
               alt="MUSSHK - Where Scent Becomes Legacy"
               width={180}
               height={60}
