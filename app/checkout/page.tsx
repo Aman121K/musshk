@@ -30,7 +30,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState<'COD' | 'Online'>('COD');
+  const [paymentMethod, setPaymentMethod] = useState<'Online'>('Online');
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const { showToast, ToastComponent } = useToast();
   const { showModal, ModalComponent } = useModal();
@@ -175,7 +175,7 @@ export default function CheckoutPage() {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
-              cartId: cart._id,
+              cartId: cartId,
             }),
           });
 
@@ -315,52 +315,15 @@ export default function CheckoutPage() {
 
       const updatedCart = await checkoutResponse.json();
 
-      if (paymentMethod === 'Online') {
-        // Initialize Razorpay payment with cartId
-        await handleRazorpayPayment(updatedCart._id);
-      } else {
-        // COD - Convert cart to order immediately
-        // Use updatedCart items instead of cart items
-        const orderResponse = await fetch(getApiUrl('orders'), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            user: user.id,
-            items: updatedCart.items.map((item: any) => ({
-              product: item.productId, // productId is already a string from API response
-              name: item.name,
-              size: item.size,
-              quantity: item.quantity,
-              price: item.price,
-            })),
-            totalAmount: updatedCart.total || cart.total,
-            email: formData.email,
-            shippingAddress: formData,
-            paymentMethod: 'COD',
-            paymentStatus: 'Pending',
-            orderStatus: 'Processing',
-          }),
-        });
-
-        if (orderResponse.ok) {
-          const order = await orderResponse.json();
-          
-          // Update cart status to converted
-          await fetch(getApiUrl(`cart/${sessionId}`), {
-            method: 'DELETE',
-          });
-          
-          // Dispatch cart update event
-          window.dispatchEvent(new Event('cartUpdated'));
-          
-          router.push(`/order-success?orderId=${order._id}`);
-        } else {
-          const errorData = await orderResponse.json();
-          showToast(errorData.error || 'Failed to create order. Please try again.', 'error');
-        }
+      // Only online payment is allowed
+      if (!updatedCart._id) {
+        showToast('Cart ID not found. Please try again.', 'error');
+        setSubmitting(false);
+        return;
       }
+
+      // Initialize Razorpay payment with cartId
+      await handleRazorpayPayment(updatedCart._id);
     } catch (error) {
       console.error('Error processing checkout:', error);
       showToast('Failed to process checkout. Please try again.', 'error');
@@ -515,35 +478,18 @@ export default function CheckoutPage() {
             </div>
             <div className="mb-4">
               <h3 className="text-sm font-semibold mb-3">Payment Method</h3>
-              <div className="space-y-2">
-                <label className="flex items-center p-3 border rounded-md cursor-pointer hover:bg-gray-50">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="COD"
-                    checked={paymentMethod === 'COD'}
-                    onChange={(e) => setPaymentMethod(e.target.value as 'COD' | 'Online')}
-                    className="mr-3"
-                  />
-                  <div>
-                    <span className="font-medium">Cash on Delivery (COD)</span>
-                    <p className="text-xs text-gray-500">Pay when you receive</p>
+              <div className="p-3 border rounded-md bg-gray-50">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                   </div>
-                </label>
-                <label className="flex items-center p-3 border rounded-md cursor-pointer hover:bg-gray-50">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="Online"
-                    checked={paymentMethod === 'Online'}
-                    onChange={(e) => setPaymentMethod(e.target.value as 'COD' | 'Online')}
-                    className="mr-3"
-                  />
-                  <div>
-                    <span className="font-medium">Online Payment</span>
+                  <div className="ml-3">
+                    <span className="font-medium text-gray-900">Online Payment</span>
                     <p className="text-xs text-gray-500">Pay securely with Razorpay</p>
                   </div>
-                </label>
+                </div>
               </div>
             </div>
             <div className="mb-4 p-4 bg-blue-50 rounded-md">
@@ -553,18 +499,18 @@ export default function CheckoutPage() {
             </div>
             <button
               type="submit"
-              disabled={submitting || (paymentMethod === 'Online' && !razorpayLoaded)}
+              disabled={submitting || !razorpayLoaded}
               className={`w-full py-3 rounded-md font-semibold text-lg transition ${
-                submitting || (paymentMethod === 'Online' && !razorpayLoaded)
+                submitting || !razorpayLoaded
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-primary-600 text-white hover:bg-primary-700'
               }`}
             >
               {submitting 
                 ? 'Processing...' 
-                : paymentMethod === 'Online' 
-                  ? 'Proceed to Payment' 
-                  : 'Place Order (COD)'}
+                : !razorpayLoaded
+                  ? 'Loading Payment Gateway...'
+                  : 'Proceed to Payment'}
             </button>
           </div>
         </div>
