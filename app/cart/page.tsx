@@ -216,17 +216,8 @@ export default function CartPage() {
         <div className="md:col-span-2">
           <div className="space-y-4">
             {cart.items.map((item) => {
-              // Ensure productId is always a string for key and operations
-              let productId = '';
-              if (item.productId) {
-                if (typeof item.productId === 'object' && item.productId.toString) {
-                  productId = item.productId.toString();
-                } else if (typeof item.productId === 'object' && item.productId._id) {
-                  productId = String(item.productId._id);
-                } else {
-                  productId = String(item.productId);
-                }
-              }
+              // productId is already normalized to string in fetchCart
+              const productId = item.productId || item.id || '';
               
               if (!productId) {
                 console.error('Invalid productId in cart item:', item);
