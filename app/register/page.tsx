@@ -89,11 +89,11 @@ function RegisterContent() {
         <div className="flex justify-center mb-6">
           <Link href="/">
             <Image
-              src="/logo/musshk.jpeg"
+              src="/logo/musshk.png"
               alt="MUSSHK - Where Scent Becomes Legacy"
-              width={200}
-              height={80}
-              className="h-16 w-auto"
+              width={280}
+              height={112}
+              className="h-24 md:h-28 w-auto"
               priority
             />
           </Link>

@@ -13,6 +13,46 @@ declare global {
   }
 }
 
+// Indian States List
+const INDIAN_STATES = [
+  'Andhra Pradesh',
+  'Arunachal Pradesh',
+  'Assam',
+  'Bihar',
+  'Chhattisgarh',
+  'Goa',
+  'Gujarat',
+  'Haryana',
+  'Himachal Pradesh',
+  'Jharkhand',
+  'Karnataka',
+  'Kerala',
+  'Madhya Pradesh',
+  'Maharashtra',
+  'Manipur',
+  'Meghalaya',
+  'Mizoram',
+  'Nagaland',
+  'Odisha',
+  'Punjab',
+  'Rajasthan',
+  'Sikkim',
+  'Tamil Nadu',
+  'Telangana',
+  'Tripura',
+  'Uttar Pradesh',
+  'Uttarakhand',
+  'West Bengal',
+  'Andaman and Nicobar Islands',
+  'Chandigarh',
+  'Dadra and Nagar Haveli and Daman and Diu',
+  'Delhi',
+  'Jammu and Kashmir',
+  'Ladakh',
+  'Lakshadweep',
+  'Puducherry'
+];
+
 export default function CheckoutPage() {
   const router = useRouter();
   const [cart, setCart] = useState<any>({ items: [], total: 0, _id: null });
@@ -32,6 +72,7 @@ export default function CheckoutPage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<'Online'>('Online');
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+  const [currentStep, setCurrentStep] = useState<'shipping' | 'payment' | 'review'>('shipping');
   const { showToast, ToastComponent } = useToast();
   const { showModal, ModalComponent } = useModal();
 
@@ -44,7 +85,6 @@ export default function CheckoutPage() {
     const userData = localStorage.getItem('user');
 
     if (!token || !userData) {
-      // User not logged in, redirect to login with return URL
       router.push(`/login?redirect=${encodeURIComponent('/checkout')}`);
       return;
     }
@@ -53,7 +93,6 @@ export default function CheckoutPage() {
       const userObj = JSON.parse(userData);
       setUser(userObj);
       
-      // Pre-fill form with user data if available
       setFormData(prev => ({
         ...prev,
         name: userObj.name || prev.name,
@@ -61,7 +100,6 @@ export default function CheckoutPage() {
         phone: userObj.phone || prev.phone,
       }));
 
-      // Fetch cart after auth check
       fetchCart();
     } catch (error) {
       console.error('Error parsing user data:', error);
@@ -86,7 +124,9 @@ export default function CheckoutPage() {
     document.body.appendChild(script);
 
     return () => {
-      document.body.removeChild(script);
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
     };
   }, []);
 
@@ -100,32 +140,76 @@ export default function CheckoutPage() {
 
       const response = await fetch(getApiUrl(`cart/${sessionId}`));
       const data = await response.json();
-      setCart(data);
-      
-      // If cart doesn't have _id, it's from old in-memory system
-      if (!data._id && data.items && data.items.length > 0) {
-        // Migrate to database - this is a fallback
-        console.warn('Cart not in database, may need migration');
+
+      if (data.items && data.items.length === 0) {
+        router.push('/cart');
+        return;
       }
 
-      if (data.items.length === 0) {
-        router.push('/cart');
-      }
+      setCart(data);
     } catch (error) {
       console.error('Error fetching cart:', error);
+      showToast('Failed to load cart. Please try again.', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      const sessionId = localStorage.getItem('sessionId');
+      if (!sessionId || !cart._id) {
+        showToast('Cart ID not found. Please try again.', 'error');
+        setSubmitting(false);
+        return;
+      }
+
+      const checkoutResponse = await fetch(getApiUrl(`cart/${sessionId}/checkout`), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          shippingAddress: formData,
+          paymentMethod: 'Online',
+          userId: user.id,
+        }),
+      });
+
+      if (!checkoutResponse.ok) {
+        const errorData = await checkoutResponse.json();
+        showToast(errorData.error || 'Failed to update cart. Please try again.', 'error');
+        setSubmitting(false);
+        return;
+      }
+
+      const updatedCart = await checkoutResponse.json();
+
+      if (!updatedCart._id) {
+        showToast('Cart ID not found. Please try again.', 'error');
+        setSubmitting(false);
+        return;
+      }
+
+      await handleRazorpayPayment(updatedCart._id);
+    } catch (error) {
+      console.error('Error during checkout:', error);
+      showToast('Something went wrong. Please try again.', 'error');
+      setSubmitting(false);
     }
   };
 
   const handleRazorpayPayment = async (cartId: string) => {
     if (!razorpayLoaded) {
       showToast('Payment gateway is loading. Please wait...', 'info');
+      setSubmitting(false);
       return;
     }
 
     try {
-      // Create Razorpay order with cartId in notes
       const paymentResponse = await fetch(getApiUrl('payment/create-order'), {
         method: 'POST',
         headers: {
@@ -165,7 +249,6 @@ export default function CheckoutPage() {
         description: `Cart ${cartId.slice(-8)}`,
         order_id: paymentData.id,
         handler: async function (response: any) {
-          // Verify payment (webhook will handle order creation, but we verify here too)
           const verifyResponse = await fetch(getApiUrl('payment/verify-payment'), {
             method: 'POST',
             headers: {
@@ -182,21 +265,17 @@ export default function CheckoutPage() {
           const verifyData = await verifyResponse.json();
 
           if (verifyResponse.ok && verifyData.success) {
-            // Clear cart (it's now converted to order)
             const sessionId = localStorage.getItem('sessionId');
             if (sessionId) {
               await fetch(getApiUrl(`cart/${sessionId}`), {
                 method: 'DELETE',
               });
             }
-            // Dispatch cart update event
             window.dispatchEvent(new Event('cartUpdated'));
             
-            // Redirect to order success page
             if (verifyData.orderId) {
               router.push(`/order-success?orderId=${verifyData.orderId}`);
             } else {
-              // Wait a moment for webhook to process, then redirect
               setTimeout(() => {
                 router.push(`/account`);
               }, 2000);
@@ -206,7 +285,6 @@ export default function CheckoutPage() {
               'Payment verification failed. Please contact support. The webhook will process your payment.',
               { type: 'warning', title: 'Payment Verification' }
             );
-            // Still redirect to account page - webhook will handle it
             setTimeout(() => {
               router.push(`/account`);
             }, 2000);
@@ -222,303 +300,283 @@ export default function CheckoutPage() {
         },
         modal: {
           ondismiss: function() {
-            // Payment cancelled - cart remains pending for potential discount campaigns
-            showModal(
-              'Payment cancelled. Your cart is saved. You can try again later or contact support for assistance.',
-              { type: 'info', title: 'Payment Cancelled' }
-            );
+            setSubmitting(false);
+            showToast('Payment cancelled', 'info');
           },
         },
       };
 
       const razorpay = new window.Razorpay(options);
-      
-      // Handle Razorpay errors
-      razorpay.on('payment.failed', function (response: any) {
-        showModal(
-          `Payment failed: ${response.error.description || 'Please try again or contact support.'}`,
-          { type: 'error', title: 'Payment Failed' }
-        );
-        setSubmitting(false);
-      });
-
       razorpay.open();
-    } catch (error: any) {
-      console.error('Payment error:', error);
-      const errorMessage = error.message || 'Payment initialization failed. Please try again.';
-      
-      // Check if it's a configuration error
-      if (errorMessage.includes('not configured') || errorMessage.includes('RAZORPAY')) {
-        showModal(
-          errorMessage,
-          { 
-            type: 'error', 
-            title: 'Payment Gateway Error',
-            confirmText: 'OK'
-          }
-        );
-      } else {
-        showToast(errorMessage, 'error');
-      }
-      setSubmitting(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-
-    try {
-      const sessionId = localStorage.getItem('sessionId');
-      if (!sessionId) return;
-
-      // Check if cart has items
-      if (!cart.items || cart.items.length === 0) {
-        showModal(
-          'Cart is empty. Please add items to cart first.',
-          { type: 'warning', title: 'Cart Empty' }
-        );
-        setTimeout(() => router.push('/cart'), 2000);
-        return;
-      }
-
-      // If cart has items but no _id, it means it's not saved to database yet
-      // This shouldn't happen with the new system, but handle it gracefully
-      if (!cart._id) {
-        showModal(
-          'Cart not properly initialized. Please try adding items to cart again.',
-          { type: 'error', title: 'Cart Error' }
-        );
-        setTimeout(() => router.push('/cart'), 2000);
-        return;
-      }
-
-      // Update cart with checkout information
-      const checkoutResponse = await fetch(getApiUrl(`cart/${sessionId}/checkout`), {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          shippingAddress: formData,
-          paymentMethod: paymentMethod,
-          userId: user.id,
-        }),
-      });
-
-      if (!checkoutResponse.ok) {
-        const errorData = await checkoutResponse.json();
-        showToast(errorData.error || 'Failed to update cart. Please try again.', 'error');
-        setSubmitting(false);
-        return;
-      }
-
-      const updatedCart = await checkoutResponse.json();
-
-      // Only online payment is allowed
-      if (!updatedCart._id) {
-        showToast('Cart ID not found. Please try again.', 'error');
-        setSubmitting(false);
-        return;
-      }
-
-      // Initialize Razorpay payment with cartId
-      await handleRazorpayPayment(updatedCart._id);
     } catch (error) {
-      console.error('Error processing checkout:', error);
-      showToast('Failed to process checkout. Please try again.', 'error');
-    } finally {
+      console.error('Error initializing Razorpay:', error);
+      showModal(
+        'Failed to initialize payment gateway. Please try again.',
+        { type: 'error', title: 'Payment Error' }
+      );
       setSubmitting(false);
     }
   };
 
   if (checkingAuth || loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-16 bg-gray-200 rounded"></div>
-              ))}
-            </div>
-            <div className="h-64 bg-gray-200 rounded"></div>
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading checkout...</p>
         </div>
       </div>
     );
   }
 
-  if (!user) {
-    return null; // Will redirect to login
+  if (cart.items.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <p className="text-gray-500 mb-4">Your cart is empty</p>
+          <button
+            onClick={() => router.push('/')}
+            className="bg-primary-600 text-white px-6 py-3 rounded-md hover:bg-primary-700 transition"
+          >
+            Continue Shopping
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-bold mb-8">Checkout</h1>
-
-      <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-8">
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Shipping Address</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Full Name *</label>
-              <input
-                type="text"
-                required
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-600"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Email Address *</label>
-              <input
-                type="email"
-                required
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-600"
-                placeholder="your.email@example.com"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Phone Number *</label>
-              <input
-                type="tel"
-                required
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-600"
-                placeholder="+91 1234567890"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Address *</label>
-              <textarea
-                required
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                rows={3}
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-600"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">City *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-600"
-                />
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Progress Steps */}
+        <div className="mb-8">
+          <div className="flex items-center justify-center space-x-4">
+            <div className="flex items-center">
+              <div className={`flex items-center justify-center w-10 h-10 rounded-full ${currentStep === 'shipping' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                <span className="font-semibold">1</span>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">State *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.state}
-                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-600"
-                />
-              </div>
+              <span className={`ml-2 font-medium ${currentStep === 'shipping' ? 'text-primary-600' : 'text-gray-600'}`}>Shipping</span>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Pincode *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.pincode}
-                  onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-600"
-                />
+            <div className="w-16 h-0.5 bg-gray-300"></div>
+            <div className="flex items-center">
+              <div className={`flex items-center justify-center w-10 h-10 rounded-full ${currentStep === 'payment' ? 'bg-primary-600 text-white' : currentStep === 'review' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                <span className="font-semibold">2</span>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Country *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.country}
-                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-600"
-                />
-              </div>
+              <span className={`ml-2 font-medium ${currentStep === 'payment' || currentStep === 'review' ? 'text-primary-600' : 'text-gray-600'}`}>Payment</span>
             </div>
           </div>
         </div>
 
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
-          <div className="bg-white border rounded-lg p-6">
-            <div className="space-y-2 mb-4">
-              {cart.items.map((item: any) => (
-                <div key={item.productId} className="flex justify-between text-sm">
-                  <span>{item.name} ({item.size}) x {item.quantity}</span>
-                  <span>Rs. {(item.price * item.quantity).toFixed(2)}</span>
-                </div>
-              ))}
-            </div>
-            <div className="border-t pt-4 mb-4">
-              <div className="flex justify-between mb-2">
-                <span>Subtotal</span>
-                <span>Rs. {cart.total.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between mb-2 text-sm text-gray-600">
-                <span>Shipping</span>
-                <span>Free</span>
-              </div>
-              <div className="flex justify-between text-lg font-bold border-t pt-2">
-                <span>Total</span>
-                <span>Rs. {cart.total.toFixed(2)}</span>
-              </div>
-            </div>
-            <div className="mb-4">
-              <h3 className="text-sm font-semibold mb-3">Payment Method</h3>
-              <div className="p-3 border rounded-md bg-gray-50">
-                <div className="flex items-center">
+        <form onSubmit={handleSubmit}>
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Main Content - Left Side */}
+            <div className="lg:col-span-2">
+              {/* Shipping Information Card */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                <div className="flex items-center mb-6">
                   <div className="flex-shrink-0">
-                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                   </div>
-                  <div className="ml-3">
-                    <span className="font-medium text-gray-900">Online Payment</span>
-                    <p className="text-xs text-gray-500">Pay securely with Razorpay</p>
+                  <h2 className="text-xl font-semibold ml-3">Shipping Information</h2>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent transition"
+                      placeholder="John Doe"
+                    />
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address *</label>
+                      <input
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent transition"
+                        placeholder="your.email@example.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone Number *</label>
+                      <input
+                        type="tel"
+                        required
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent transition"
+                        placeholder="+91 1234567890"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Street Address *</label>
+                    <textarea
+                      required
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      rows={3}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent transition resize-none"
+                      placeholder="House/Flat No., Building Name, Street"
+                    />
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">City *</label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.city}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent transition"
+                        placeholder="Mumbai"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">State *</label>
+                      <select
+                        required
+                        value={formData.state}
+                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent transition bg-white"
+                      >
+                        <option value="">Select State</option>
+                        {INDIAN_STATES.map((state) => (
+                          <option key={state} value={state}>
+                            {state}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Pincode *</label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.pincode}
+                        onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent transition"
+                        placeholder="110001"
+                        maxLength={6}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Country *</label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.country}
+                        onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent transition bg-gray-50"
+                        readOnly
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="mb-4 p-4 bg-blue-50 rounded-md">
-              <p className="text-sm text-blue-800">
-                <strong>Note:</strong> You will receive an order confirmation email after placing your order.
-              </p>
-            </div>
-            <button
-              type="submit"
-              disabled={submitting || !razorpayLoaded}
-              className={`w-full py-3 rounded-md font-semibold text-lg transition ${
-                submitting || !razorpayLoaded
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-primary-600 text-white hover:bg-primary-700'
-              }`}
-            >
-              {submitting 
-                ? 'Processing...' 
-                : !razorpayLoaded
-                  ? 'Loading Payment Gateway...'
-                  : 'Proceed to Payment'}
-            </button>
-          </div>
-        </div>
-      </form>
 
-      <ToastComponent />
-      <ModalComponent />
+            {/* Order Summary - Right Side */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-24">
+                <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
+                
+                {/* Cart Items */}
+                <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
+                  {cart.items.map((item: any) => (
+                    <div key={item.productId} className="flex items-start space-x-3 pb-3 border-b border-gray-100 last:border-0">
+                      <div className="flex-shrink-0 w-16 h-16 bg-gray-100 rounded-md overflow-hidden">
+                        {item.image ? (
+                          <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <span className="text-xl">✨</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{item.size}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">Qty: {item.quantity}</p>
+                        <p className="text-sm font-semibold text-gray-900 mt-1">Rs. {(item.price * item.quantity).toFixed(2)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Price Breakdown */}
+                <div className="border-t border-gray-200 pt-4 space-y-2 mb-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Subtotal</span>
+                    <span className="font-medium">Rs. {cart.total.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Shipping</span>
+                    <span className="font-medium text-green-600">Free</span>
+                  </div>
+                  <div className="flex justify-between text-lg font-bold border-t border-gray-200 pt-2 mt-2">
+                    <span>Total</span>
+                    <span>Rs. {cart.total.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {/* Payment Method */}
+                <div className="mb-4 p-3 bg-gray-50 rounded-md border border-gray-200">
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Online Payment</p>
+                      <p className="text-xs text-gray-500">Secure payment via Razorpay</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={submitting || !razorpayLoaded}
+                  className={`w-full py-3.5 rounded-md font-semibold text-base transition-all ${
+                    submitting || !razorpayLoaded
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-primary-600 text-white hover:bg-primary-700 shadow-md hover:shadow-lg'
+                  }`}
+                >
+                  {submitting 
+                    ? 'Processing...' 
+                    : !razorpayLoaded
+                      ? 'Loading Payment...'
+                      : 'Complete Order'}
+                </button>
+
+                <p className="text-xs text-gray-500 text-center mt-3">
+                  🔒 Your payment information is secure and encrypted
+                </p>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <ToastComponent />
+        <ModalComponent />
+      </div>
     </div>
   );
 }
-

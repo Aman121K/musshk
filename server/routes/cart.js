@@ -237,8 +237,14 @@ router.put('/:sessionId/:itemId', async (req, res) => {
 router.delete('/:sessionId/:itemId', async (req, res) => {
   try {
     const { sessionId, itemId } = req.params;
+    // Also check request body for productId
+    const { productId, id } = req.body || {};
 
-    console.log(`[Delete Item] Removing item ${itemId} from cart ${sessionId}`);
+    // Use productId from body, id from body, or itemId from params (in that order)
+    const identifier = productId || id || itemId;
+
+    console.log(`[Delete Item] Removing item from cart ${sessionId}`);
+    console.log(`[Delete Item] Identifier: ${identifier} (from: ${productId ? 'body.productId' : id ? 'body.id' : 'params.itemId'})`);
 
     const cart = await Cart.findOne({ 
       sessionId, 
@@ -251,20 +257,23 @@ router.delete('/:sessionId/:itemId', async (req, res) => {
     }
 
     console.log(`[Delete Item] Cart has ${cart.items.length} items`);
-    console.log(`[Delete Item] Looking for productId: ${itemId}`);
+    console.log(`[Delete Item] Looking for productId/id: ${identifier}`);
     
-    // Log all productIds before filtering for debugging
-    const allProductIds = cart.items.map(i => {
+    // Log all productIds and items before filtering for debugging
+    const allProductIds = cart.items.map((i, idx) => {
       const pid = i.productId?.toString ? i.productId.toString() : String(i.productId || '');
-      return pid;
+      return { index: idx, productId: pid, id: i._id?.toString() || 'N/A' };
     });
-    console.log(`[Delete Item] All productIds in cart:`, allProductIds);
+    console.log(`[Delete Item] All items in cart:`, allProductIds);
 
-    // Find the index of the item to remove
+    // Find the index of the item to remove - check both productId and _id
     let itemIndex = -1;
     for (let i = 0; i < cart.items.length; i++) {
       const item = cart.items[i];
       let productIdStr;
+      let itemIdStr;
+      
+      // Get productId as string
       if (item.productId) {
         if (typeof item.productId === 'object' && item.productId.toString) {
           productIdStr = item.productId.toString();
@@ -275,18 +284,31 @@ router.delete('/:sessionId/:itemId', async (req, res) => {
         productIdStr = '';
       }
       
-      console.log(`[Delete Item] Comparing: "${productIdStr}" === "${itemId}" ? ${productIdStr === itemId}`);
+      // Get item _id as string
+      if (item._id) {
+        itemIdStr = item._id.toString();
+      } else {
+        itemIdStr = '';
+      }
       
-      if (productIdStr === itemId) {
+      console.log(`[Delete Item] Comparing: productId "${productIdStr}" or id "${itemIdStr}" === "${identifier}"`);
+      
+      // Match by productId or _id
+      if (productIdStr === identifier || itemIdStr === identifier) {
         itemIndex = i;
-        console.log(`[Delete Item] Found matching item at index ${i}`);
+        console.log(`[Delete Item] Found matching item at index ${i} (matched by: ${productIdStr === identifier ? 'productId' : 'id'})`);
         break;
       }
     }
 
     if (itemIndex === -1) {
-      console.log(`[Delete Item] No item found with productId: ${itemId}`);
-      return res.status(404).json({ error: 'Item not found in cart' });
+      console.log(`[Delete Item] No item found with identifier: ${identifier}`);
+      return res.status(404).json({ 
+        error: 'Item not found in cart',
+        message: 'Invalid item identifier. Please provide productId in request body or use DELETE /:sessionId/item endpoint.',
+        availableItems: allProductIds,
+        providedIdentifier: identifier
+      });
     }
 
     // Remove the item using splice
@@ -307,11 +329,13 @@ router.delete('/:sessionId/:itemId', async (req, res) => {
     console.log(`[Delete Item] Cart updated successfully. New total: ${cart.total}`);
     
     // Convert productId to string for frontend compatibility
+    // Also include item _id for identification
     const cartData = cart.toObject();
     if (cartData.items) {
       cartData.items = cartData.items.map(item => ({
         ...item,
         productId: item.productId?.toString ? item.productId.toString() : String(item.productId || ''),
+        id: item._id?.toString ? item._id.toString() : (item._id ? String(item._id) : ''),
       }));
     }
     

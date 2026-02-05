@@ -97,15 +97,15 @@ export default function Header() {
         </div>
 
         {/* Main Header */}
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-24 md:h-28">
           {/* Logo */}
           <Link href="/" className="flex items-center">
             <Image
-              src="/logo/musshk.jpeg"
+              src="/logo/musshk.png"
               alt="MUSSHK - Where Scent Becomes Legacy"
-              width={180}
-              height={60}
-              className="h-12 w-auto"
+              width={240}
+              height={80}
+              className="h-16 md:h-20 w-auto"
               priority
             />
           </Link>

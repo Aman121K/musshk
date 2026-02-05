@@ -6,6 +6,7 @@ import { getApiUrl } from '@/lib/api';
 
 interface CartItem {
   productId: string;
+  id?: string; // MongoDB _id of the cart item for identification
   name: string;
   size: string;
   price: number;
@@ -39,12 +40,38 @@ export default function CartPage() {
       const response = await fetch(getApiUrl(`cart/${sessionId}`));
       const data = await response.json();
       
-      // Ensure productId is always a string
+      // Ensure productId is always a string - handle MongoDB ObjectId
+      // Also extract item _id for identification
       if (data.items && Array.isArray(data.items)) {
-        data.items = data.items.map((item: any) => ({
-          ...item,
-          productId: String(item.productId || ''),
-        }));
+        data.items = data.items.map((item: any) => {
+          let productIdStr = '';
+          let itemIdStr = '';
+          
+          if (item.productId) {
+            if (typeof item.productId === 'object' && item.productId.toString) {
+              productIdStr = item.productId.toString();
+            } else if (typeof item.productId === 'object' && item.productId._id) {
+              productIdStr = String(item.productId._id);
+            } else {
+              productIdStr = String(item.productId);
+            }
+          }
+          
+          // Extract item _id if it exists
+          if (item._id) {
+            if (typeof item._id === 'object' && item._id.toString) {
+              itemIdStr = item._id.toString();
+            } else {
+              itemIdStr = String(item._id);
+            }
+          }
+          
+          return {
+            ...item,
+            productId: productIdStr,
+            id: itemIdStr || productIdStr, // Use item _id if available, fallback to productId
+          };
+        });
       }
       
       setCart(data);
@@ -65,8 +92,22 @@ export default function CartPage() {
       const sessionId = localStorage.getItem('sessionId');
       if (!sessionId) return;
 
-      // Ensure productId is a string
-      const productIdStr = String(productId || '');
+      // Ensure productId is a string - handle object case
+      let productIdStr = '';
+      if (productId) {
+        if (typeof productId === 'object' && productId.toString) {
+          productIdStr = productId.toString();
+        } else if (typeof productId === 'object' && productId._id) {
+          productIdStr = String(productId._id);
+        } else {
+          productIdStr = String(productId);
+        }
+      }
+      
+      if (!productIdStr) {
+        console.error('Invalid productId:', productId);
+        return;
+      }
 
       await fetch(getApiUrl(`cart/${sessionId}/${productIdStr}`), {
         method: 'PUT',
@@ -89,11 +130,36 @@ export default function CartPage() {
       const sessionId = localStorage.getItem('sessionId');
       if (!sessionId) return;
 
-      // Ensure productId is a string
-      const productIdStr = String(productId || '');
+      // Ensure productId is a string - handle object case
+      let productIdStr = '';
+      if (productId) {
+        if (typeof productId === 'object' && productId.toString) {
+          productIdStr = productId.toString();
+        } else if (typeof productId === 'object' && productId._id) {
+          productIdStr = String(productId._id);
+        } else {
+          productIdStr = String(productId);
+        }
+      }
+      
+      if (!productIdStr) {
+        console.error('Invalid productId:', productId);
+        return;
+      }
 
-      const response = await fetch(getApiUrl(`cart/${sessionId}/${productIdStr}`), {
+      console.log('[Cart] Removing item with productId:', productIdStr, 'Type:', typeof productIdStr);
+      const apiUrl = getApiUrl(`cart/${sessionId}/${productIdStr}`);
+      console.log('[Cart] DELETE URL:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId: productIdStr,
+          id: productIdStr, // Also send as id for backend flexibility
+        }),
       });
 
       if (!response.ok) {
@@ -151,7 +217,22 @@ export default function CartPage() {
           <div className="space-y-4">
             {cart.items.map((item) => {
               // Ensure productId is always a string for key and operations
-              const productId = String(item.productId || '');
+              let productId = '';
+              if (item.productId) {
+                if (typeof item.productId === 'object' && item.productId.toString) {
+                  productId = item.productId.toString();
+                } else if (typeof item.productId === 'object' && item.productId._id) {
+                  productId = String(item.productId._id);
+                } else {
+                  productId = String(item.productId);
+                }
+              }
+              
+              if (!productId) {
+                console.error('Invalid productId in cart item:', item);
+                return null;
+              }
+              
               return (
               <div
                 key={productId}
@@ -195,7 +276,7 @@ export default function CartPage() {
                   </div>
 
                   <button
-                    onClick={() => removeItem(productId)}
+                    onClick={() => removeItem(item.id || productId)}
                     className="text-red-500 hover:text-red-700"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
