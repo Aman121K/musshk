@@ -115,6 +115,16 @@ export default function TrackOrderPage() {
               <div>
                 <p className="text-sm text-gray-500 mb-1">Tracking Number</p>
                 <p className="font-semibold">{order.trackingNumber}</p>
+                {order.trackingUrl && (
+                  <a
+                    href={order.trackingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary-600 font-medium hover:underline mt-1 inline-block"
+                  >
+                    Track shipment →
+                  </a>
+                )}
               </div>
             )}
             <div>

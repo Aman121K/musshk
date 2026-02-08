@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getApiUrl, API_BASE_URL } from '@/lib/api';
+import { getApiUrl, getImageUrl } from '@/lib/api';
 
 function AccountContent() {
   const router = useRouter();
@@ -236,11 +236,13 @@ function AccountContent() {
                               <div className="flex-shrink-0 w-16 h-16 bg-white rounded-md border border-gray-200 overflow-hidden">
                                 {item.image ? (
                                   <img 
-                                    src={item.image.startsWith('http') ? item.image : `${API_BASE_URL.replace('/api', '')}${item.image}`} 
+                                    src={item.image.startsWith('http') ? item.image : getImageUrl(item.image)} 
                                     alt={item.name} 
                                     className="w-full h-full object-cover"
                                     onError={(e) => {
-                                      (e.target as HTMLImageElement).src = '/placeholder-image.jpg';
+                                      const t = e.target as HTMLImageElement;
+                                      t.onerror = null;
+                                      t.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><rect fill="%23f5eef3" width="64" height="64"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23965087" font-size="24">✨</text></svg>');
                                     }}
                                   />
                                 ) : (
