@@ -34,8 +34,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const res = await fetch(`${API_BASE}/products?limit=500`, { next: { revalidate: 3600 } });
     const data = await res.json();
     const products = data.products || data || [];
-    productUrls = (Array.isArray(products) ? products : []).map((p: { slug?: string; updatedAt?: string }) => ({
-      url: `${baseUrl}/products/${p.slug || p._id}`,
+    productUrls = (Array.isArray(products) ? products : []).map((p: { slug?: string; _id?: string; updatedAt?: string }) => ({
+      url: `${baseUrl}/products/${p.slug || p._id || ''}`,
       lastModified: p.updatedAt ? new Date(p.updatedAt) : new Date(),
       changeFrequency: 'weekly' as const,
       priority: 0.85,
