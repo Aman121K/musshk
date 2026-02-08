@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getApiUrl } from '@/lib/api';
+import { getSessionId } from '@/lib/session';
 import { useToast } from '@/hooks/useToast';
 import { useModal } from '@/hooks/useModal';
 
@@ -132,11 +133,7 @@ export default function CheckoutPage() {
 
   const fetchCart = async () => {
     try {
-      const sessionId = localStorage.getItem('sessionId');
-      if (!sessionId) {
-        router.push('/cart');
-        return;
-      }
+      const sessionId = getSessionId();
 
       const response = await fetch(getApiUrl(`cart/${sessionId}`));
       const data = await response.json();
@@ -160,8 +157,8 @@ export default function CheckoutPage() {
     setSubmitting(true);
 
     try {
-      const sessionId = localStorage.getItem('sessionId');
-      if (!sessionId || !cart._id) {
+      const sessionId = getSessionId();
+      if (!cart._id) {
         showToast('Cart ID not found. Please try again.', 'error');
         setSubmitting(false);
         return;
@@ -265,12 +262,10 @@ export default function CheckoutPage() {
           const verifyData = await verifyResponse.json();
 
           if (verifyResponse.ok && verifyData.success) {
-            const sessionId = localStorage.getItem('sessionId');
-            if (sessionId) {
-              await fetch(getApiUrl(`cart/${sessionId}`), {
-                method: 'DELETE',
-              });
-            }
+            const sessionId = getSessionId();
+            await fetch(getApiUrl(`cart/${sessionId}`), {
+              method: 'DELETE',
+            });
             window.dispatchEvent(new Event('cartUpdated'));
             
             if (verifyData.orderId) {

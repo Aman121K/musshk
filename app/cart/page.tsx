@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getApiUrl } from '@/lib/api';
+import { getApiUrl, getImageUrl } from '@/lib/api';
+import { getSessionId } from '@/lib/session';
 
 interface CartItem {
   productId: string;
@@ -31,11 +32,7 @@ export default function CartPage() {
 
   const fetchCart = async () => {
     try {
-      const sessionId = localStorage.getItem('sessionId');
-      if (!sessionId) {
-        setLoading(false);
-        return;
-      }
+      const sessionId = getSessionId();
 
       const response = await fetch(getApiUrl(`cart/${sessionId}`));
       const data = await response.json();
@@ -89,8 +86,7 @@ export default function CartPage() {
     }
 
     try {
-      const sessionId = localStorage.getItem('sessionId');
-      if (!sessionId) return;
+      const sessionId = getSessionId();
 
       // Ensure productId is a string - handle object case
       let productIdStr = '';
@@ -127,8 +123,7 @@ export default function CartPage() {
 
   const removeItem = async (productId: string | any) => {
     try {
-      const sessionId = localStorage.getItem('sessionId');
-      if (!sessionId) return;
+      const sessionId = getSessionId();
 
       // Ensure productId is a string - handle object case
       let productIdStr = '';
@@ -147,10 +142,7 @@ export default function CartPage() {
         return;
       }
 
-      console.log('[Cart] Removing item with productId:', productIdStr, 'Type:', typeof productIdStr);
       const apiUrl = getApiUrl(`cart/${sessionId}/${productIdStr}`);
-      console.log('[Cart] DELETE URL:', apiUrl);
-      
       const response = await fetch(apiUrl, {
         method: 'DELETE',
         headers: {
@@ -231,7 +223,7 @@ export default function CartPage() {
               >
                 <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                   {item.image ? (
-                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                    <img src={item.image.startsWith('http') ? item.image : getImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <span className="text-2xl">✨</span>

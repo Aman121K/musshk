@@ -4,7 +4,19 @@
  * Default: https://api.musshk.com/api
  */
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.musshk.com/api';
-// export const API_BASE_URL = 'http://localhost:5000/api';
+
+/** Origin for uploads (API base without /api) so /uploads/... resolves correctly */
+export const UPLOADS_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, '') || 'https://api.musshk.com';
+
+/**
+ * Build full URL for image paths (e.g. /uploads/xyz or full URLs).
+ */
+export function getImageUrl(imagePath: string | undefined | null): string {
+  if (!imagePath) return '';
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
+  const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+  return `${UPLOADS_ORIGIN}${path}`;
+}
 
 /**
  * Helper function to build API endpoints
@@ -12,18 +24,8 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.muss
  * @returns Full API URL
  */
 export function getApiUrl(endpoint: string): string {
-  // Remove leading slash if present to avoid double slashes
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-  // Ensure API_BASE_URL doesn't end with / and cleanEndpoint doesn't start with /
   const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
-  const finalUrl = `${baseUrl}/${cleanEndpoint}`;
-  
-  // Debug log in development (only for errors or when needed)
-  // Commented out to reduce console noise - uncomment if debugging API issues
-  // if (process.env.NODE_ENV === 'development') {
-  //   console.log('[API] Building URL:', { baseUrl, endpoint: cleanEndpoint, finalUrl });
-  // }
-  
-  return finalUrl;
+  return `${baseUrl}/${cleanEndpoint}`;
 }
 

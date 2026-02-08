@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
 import { getApiUrl, API_BASE_URL } from '@/lib/api';
+import { getSessionId } from '@/lib/session';
 import { useToast } from '@/hooks/useToast';
 
 interface Product {
@@ -68,8 +69,7 @@ export default function ProductDetailPage() {
     if (!product) return;
 
     try {
-      const sessionId = localStorage.getItem('sessionId') || 'session_' + Date.now();
-      localStorage.setItem('sessionId', sessionId);
+      const sessionId = getSessionId();
 
       const sizeData = product.sizes?.find(s => s.size === selectedSize);
       const price = sizeData?.price || product.price;

@@ -16,6 +16,16 @@ const nextConfig = {
         hostname: 'api.musshk.com',
         pathname: '/**',
       },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'logo.clearbit.com',
+        pathname: '/**',
+      },
     ],
   },
 }

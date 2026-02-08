@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { getApiUrl, API_BASE_URL } from '@/lib/api';
+import { getApiUrl, getImageUrl } from '@/lib/api';
+import { getSessionId } from '@/lib/session';
 
 interface Product {
   _id: string;
@@ -28,39 +29,52 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
+    // Initial check
     checkCartQuantity();
+    
     // Listen for cart updates
     const handleCartUpdate = () => {
-      checkCartQuantity();
+      // Small delay to ensure cart is updated on server
+      setTimeout(() => {
+        checkCartQuantity();
+      }, 150);
     };
+    
     window.addEventListener('cartUpdated', handleCartUpdate);
-    return () => window.removeEventListener('cartUpdated', handleCartUpdate);
+    
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+    };
   }, [product._id]);
 
   const checkCartQuantity = async () => {
     try {
-      const sessionId = localStorage.getItem('sessionId');
-      if (!sessionId) {
-        setCartQuantity(0);
-        return;
-      }
+      const sessionId = getSessionId();
 
       const response = await fetch(getApiUrl(`cart/${sessionId}`));
       const cart = await response.json();
-      const cartItem = cart.items?.find((item: any) => item.productId === product._id);
+      
+      // Normalize productId for comparison (handle both string and ObjectId)
+      const productIdStr = String(product._id);
+      const cartItem = cart.items?.find((item: any) => {
+        const itemProductId = item.productId?.toString ? item.productId.toString() : String(item.productId || '');
+        return itemProductId === productIdStr;
+      });
+      
       setCartQuantity(cartItem?.quantity || 0);
     } catch (error) {
       console.error('Error checking cart:', error);
+      setCartQuantity(0);
     }
   };
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsAdding(true);
 
     try {
-      const sessionId = localStorage.getItem('sessionId') || 'session_' + Date.now();
-      localStorage.setItem('sessionId', sessionId);
+      const sessionId = getSessionId();
 
       const response = await fetch(getApiUrl(`cart/${sessionId}`), {
         method: 'POST',
@@ -78,9 +92,15 @@ export default function ProductCard({ product }: ProductCardProps) {
       });
 
       if (response.ok) {
+        // Immediately set quantity to show controls
         setCartQuantity(1);
-        // Dispatch event to update cart count in header immediately
+        // Verify with actual cart data
+        await checkCartQuantity();
+        // Dispatch event to update cart count in header
         window.dispatchEvent(new Event('cartUpdated'));
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to add to cart:', errorData);
       }
     } catch (error) {
       console.error('Error adding to cart:', error);
@@ -101,8 +121,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     setIsUpdating(true);
 
     try {
-      const sessionId = localStorage.getItem('sessionId');
-      if (!sessionId) return;
+      const sessionId = getSessionId();
 
       const response = await fetch(getApiUrl(`cart/${sessionId}/${product._id}`), {
         method: 'PUT',
@@ -113,11 +132,20 @@ export default function ProductCard({ product }: ProductCardProps) {
       });
 
       if (response.ok) {
+        // Optimistically update UI
         setCartQuantity(newQuantity);
+        // Verify with actual cart data
+        await checkCartQuantity();
+        // Dispatch event to update cart count in header
         window.dispatchEvent(new Event('cartUpdated'));
+      } else {
+        // Revert on error
+        await checkCartQuantity();
       }
     } catch (error) {
       console.error('Error updating cart:', error);
+      // Revert on error
+      await checkCartQuantity();
     } finally {
       setIsUpdating(false);
     }
@@ -129,19 +157,34 @@ export default function ProductCard({ product }: ProductCardProps) {
     setIsUpdating(true);
 
     try {
-      const sessionId = localStorage.getItem('sessionId');
-      if (!sessionId) return;
+      const sessionId = getSessionId();
 
       const response = await fetch(getApiUrl(`cart/${sessionId}/${product._id}`), {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId: product._id,
+          id: product._id,
+        }),
       });
 
       if (response.ok) {
+        // Optimistically update UI
         setCartQuantity(0);
+        // Verify with actual cart data
+        await checkCartQuantity();
+        // Dispatch event to update cart count in header
         window.dispatchEvent(new Event('cartUpdated'));
+      } else {
+        // Revert on error
+        await checkCartQuantity();
       }
     } catch (error) {
       console.error('Error removing from cart:', error);
+      // Revert on error
+      await checkCartQuantity();
     } finally {
       setIsUpdating(false);
     }
@@ -155,11 +198,13 @@ export default function ProductCard({ product }: ProductCardProps) {
           <div className="relative aspect-square bg-gray-100 overflow-hidden">
             {product.images && product.images.length > 0 ? (
               <img
-                src={product.images[0].startsWith('http') ? product.images[0] : `${API_BASE_URL}${product.images[0]}`}
+                src={getImageUrl(product.images[0])}
                 alt={product.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/placeholder-image.jpg';
+                  const t = e.target as HTMLImageElement;
+                  t.onerror = null;
+                  t.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><rect fill="%23f5eef3" width="400" height="400"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23965087" font-family="sans-serif" font-size="24">Musshk</text></svg>');
                 }}
               />
             ) : (
@@ -210,47 +255,78 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
         </Link>
 
-        {/* Add to Cart Button or Quantity Controls */}
+        {/* Add to Cart Button or Quantity Controls - Shopify Style */}
         <div className="px-4 pb-4">
           {cartQuantity > 0 ? (
-            <div className="flex items-center justify-center space-x-3">
+            <div className="flex items-center justify-between bg-gray-50 rounded-lg border border-gray-200 p-2">
               <button
                 onClick={(e) => handleUpdateQuantity(e, cartQuantity - 1)}
                 disabled={product.soldOut || isUpdating}
-                className={`w-10 h-10 border rounded-md flex items-center justify-center hover:bg-gray-50 transition ${
+                className={`flex-shrink-0 w-9 h-9 rounded-md flex items-center justify-center font-medium transition-all duration-200 ${
                   product.soldOut || isUpdating
-                    ? 'bg-gray-100 cursor-not-allowed'
-                    : 'border-gray-300'
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100 hover:border-gray-400 active:scale-95'
                 }`}
+                aria-label="Decrease quantity"
               >
-                -
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                </svg>
               </button>
-              <span className="text-lg font-semibold min-w-[2rem] text-center">
-                {isUpdating ? '...' : cartQuantity}
-              </span>
+              <div className="flex-1 text-center">
+                <span className="text-base font-semibold text-gray-900">
+                  {isUpdating ? (
+                    <span className="inline-block animate-pulse">...</span>
+                  ) : (
+                    `${cartQuantity} ${cartQuantity === 1 ? 'item' : 'items'} in cart`
+                  )}
+                </span>
+              </div>
               <button
                 onClick={(e) => handleUpdateQuantity(e, cartQuantity + 1)}
                 disabled={product.soldOut || isUpdating}
-                className={`w-10 h-10 border rounded-md flex items-center justify-center hover:bg-gray-50 transition ${
+                className={`flex-shrink-0 w-9 h-9 rounded-md flex items-center justify-center font-medium transition-all duration-200 ${
                   product.soldOut || isUpdating
-                    ? 'bg-gray-100 cursor-not-allowed'
-                    : 'border-gray-300'
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100 hover:border-gray-400 active:scale-95'
                 }`}
+                aria-label="Increase quantity"
               >
-                +
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
               </button>
             </div>
           ) : (
             <button
               onClick={handleAddToCart}
               disabled={product.soldOut || isAdding}
-              className={`w-full py-2 rounded-md font-semibold transition ${
+              className={`w-full py-3 rounded-md font-semibold text-sm transition-all duration-200 ${
                 product.soldOut
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-primary-600 text-white hover:bg-primary-700'
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                  : isAdding
+                  ? 'bg-primary-500 text-white cursor-wait'
+                  : 'bg-primary-600 text-white hover:bg-primary-700 active:scale-[0.98] shadow-sm hover:shadow-md'
               }`}
             >
-              {isAdding ? 'Adding...' : product.soldOut ? 'Sold Out' : 'Add to cart'}
+              {isAdding ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Adding...
+                </span>
+              ) : product.soldOut ? (
+                'Sold Out'
+              ) : (
+                <span className="flex items-center justify-center">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  Add to cart
+                </span>
+              )}
             </button>
           )}
         </div>

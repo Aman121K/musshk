@@ -108,7 +108,7 @@ export default function PrivacyPolicyPage() {
           <p className="text-gray-700 mt-2">
             Email: <a href="mailto:Musshk09@gmail.com" className="text-primary-600 hover:underline">Musshk09@gmail.com</a><br />
             Phone: <a href="tel:9759905151" className="text-primary-600 hover:underline">97599 05151</a><br />
-            Address: Musshk, Surat, Gujarat, India
+            Address: Gurgaon, Haryana, India
           </p>
         </section>
       </div>

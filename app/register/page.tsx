@@ -3,7 +3,6 @@
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { getApiUrl } from '@/lib/api';
 import { getSessionId } from '@/lib/visitorTracking';
 
@@ -87,14 +86,19 @@ function RegisterContent() {
     <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="bg-white rounded-lg shadow-md p-8">
         <div className="flex justify-center mb-6">
-          <Link href="/">
-            <Image
-              src="/logo/musshk.png"
-              alt="MUSSHK - Where Scent Becomes Legacy"
-              width={280}
-              height={112}
-              className="h-24 md:h-28 w-auto"
-              priority
+          <Link href="/" className="inline-block" aria-label="MUSSHK - Where Scent Becomes Legacy">
+            <span
+              className="block h-24 md:h-28 w-[240px] md:w-[280px] bg-primary-600 shrink-0"
+              style={{
+                WebkitMaskImage: 'url(/logo/musshk.png)',
+                WebkitMaskSize: 'contain',
+                WebkitMaskRepeat: 'no-repeat',
+                WebkitMaskPosition: 'center',
+                maskImage: 'url(/logo/musshk.png)',
+                maskSize: 'contain',
+                maskRepeat: 'no-repeat',
+                maskPosition: 'center',
+              }}
             />
           </Link>
         </div>

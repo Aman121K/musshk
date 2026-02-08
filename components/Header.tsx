@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { getApiUrl } from '@/lib/api';
+import { getSessionId } from '@/lib/session';
 
 export default function Header() {
   const [cartCount, setCartCount] = useState(0);
@@ -13,8 +13,7 @@ export default function Header() {
   const router = useRouter();
 
   useEffect(() => {
-    const sessionId = localStorage.getItem('sessionId') || generateSessionId();
-    localStorage.setItem('sessionId', sessionId);
+    const sessionId = getSessionId();
     fetchCartCount(sessionId);
     
     // Check if user is logged in
@@ -29,7 +28,7 @@ export default function Header() {
 
     // Listen for cart updates
     const handleCartUpdate = () => {
-      const currentSessionId = localStorage.getItem('sessionId') || generateSessionId();
+      const currentSessionId = getSessionId();
       fetchCartCount(currentSessionId);
     };
 
@@ -42,10 +41,6 @@ export default function Header() {
     localStorage.removeItem('user');
     setUser(null);
     router.push('/');
-  };
-
-  const generateSessionId = () => {
-    return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   };
 
   const fetchCartCount = async (sessionId: string) => {
@@ -98,15 +93,20 @@ export default function Header() {
 
         {/* Main Header */}
         <div className="flex items-center justify-between h-24 md:h-28">
-          {/* Logo */}
-          <Link href="/" className="flex items-center">
-            <Image
-              src="/logo/musshk.png"
-              alt="MUSSHK - Where Scent Becomes Legacy"
-              width={240}
-              height={80}
-              className="h-16 md:h-20 w-auto"
-              priority
+          {/* Logo - tinted with primary for clear visibility on white (CSS mask instead of React Native tintColor) */}
+          <Link href="/" className="flex items-center" aria-label="MUSSHK - Where Scent Becomes Legacy">
+            <span
+              className="block h-16 md:h-20 w-[200px] md:w-[240px] bg-primary-600 shrink-0"
+              style={{
+                WebkitMaskImage: 'url(/logo/musshk.png)',
+                WebkitMaskSize: 'contain',
+                WebkitMaskRepeat: 'no-repeat',
+                WebkitMaskPosition: 'center',
+                maskImage: 'url(/logo/musshk.png)',
+                maskSize: 'contain',
+                maskRepeat: 'no-repeat',
+                maskPosition: 'center',
+              }}
             />
           </Link>
 

@@ -52,8 +52,7 @@ export default function ContactPage() {
               <h3 className="font-semibold text-gray-900 mb-2">Address</h3>
               <p className="text-gray-700">
                 Musshk<br />
-                Surat, Gujarat, India<br />
-                395001
+                Gurgaon, Haryana, India
               </p>
             </div>
 

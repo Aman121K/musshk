@@ -33,7 +33,7 @@ export default function FAQsPage() {
     },
     {
       question: 'Where are the perfumes produced?',
-      answer: 'All products are made in our atelier in Surat, Gujarat, India. We maintain strict quality control standards and use only premium ingredients sourced from trusted suppliers.',
+      answer: 'All products are made in our atelier in Gurgaon, Haryana, India. We maintain strict quality control standards and use only premium ingredients sourced from trusted suppliers.',
     },
     {
       question: 'Do you use animal-derived ingredients or do animal testing?',

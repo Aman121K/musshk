@@ -1,7 +1,41 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { getApiUrl } from '@/lib/api';
 
 export default function Footer() {
+  const [email, setEmail] = useState('');
+  const [subscribed, setSubscribed] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setError('');
+    setLoading(true);
+    try {
+      const res = await fetch(getApiUrl('subscribers'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok && (data.subscribed || data.message)) {
+        setSubscribed(true);
+        setEmail('');
+      } else {
+        setError(data.error || 'Subscription failed. Try again.');
+      }
+    } catch {
+      setError('Subscription failed. Try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <footer className="mt-20 text-white" style={{ backgroundColor: '#1a1a2e' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -22,24 +56,35 @@ export default function Footer() {
           <div className="min-w-0">
             <h3 className="text-lg font-bold text-white mb-4">Unlock Exclusive Offers & Updates from Musshk</h3>
             <p className="text-gray-400 text-sm mb-4">Exclusive scents, bundles, offers directly to you.</p>
-            <div className="flex w-full">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 min-w-0 px-4 py-2.5 text-white placeholder-gray-400 rounded-l-md focus:outline-none focus:ring-2 focus:ring-primary-600 border-0 text-sm"
-                style={{ backgroundColor: '#2d2d44' }}
-              />
-              <button className="bg-primary-600 px-4 py-2.5 rounded-r-md font-semibold text-white transition hover:opacity-90 whitespace-nowrap text-sm flex-shrink-0">
-                Subscribe
-              </button>
-            </div>
+            {subscribed ? (
+              <p className="text-primary-300 font-medium text-sm">Thanks for subscribing! We&apos;ll email you when we add new products or blog posts.</p>
+            ) : (
+              <form onSubmit={handleNewsletterSubmit} className="flex flex-col gap-2 w-full">
+                <div className="flex w-full">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                    placeholder="Enter your email"
+                    required
+                    disabled={loading}
+                    className="flex-1 min-w-0 px-4 py-2.5 text-white placeholder-gray-400 rounded-l-md focus:outline-none focus:ring-2 focus:ring-primary-600 border-0 text-sm disabled:opacity-70"
+                    style={{ backgroundColor: '#2d2d44' }}
+                  />
+                  <button type="submit" disabled={loading} className="bg-primary-600 px-4 py-2.5 rounded-r-md font-semibold text-white transition hover:opacity-90 whitespace-nowrap text-sm flex-shrink-0 disabled:opacity-70">
+                    {loading ? '...' : 'Subscribe'}
+                  </button>
+                </div>
+                {error && <p className="text-red-300 text-xs">{error}</p>}
+              </form>
+            )}
           </div>
 
           {/* Shop now */}
           <div className="min-w-0">
             <h3 className="text-lg font-bold text-white mb-4">Shop now</h3>
             <ul className="space-y-2.5">
-              <li><Link href="/best-sellers" className="text-gray-400 hover:text-white transition text-sm">Best Sellers</Link></li>
+              <li><Link href="/best-seller" className="text-gray-400 hover:text-white transition text-sm">Best Sellers</Link></li>
               <li><Link href="/for-him" className="text-gray-400 hover:text-white transition text-sm">For Him</Link></li>
               <li><Link href="/for-her" className="text-gray-400 hover:text-white transition text-sm">For Her</Link></li>
             </ul>

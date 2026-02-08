@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getApiUrl } from '@/lib/api';
+import { getApiUrl, getImageUrl } from '@/lib/api';
 
 interface Banner {
   _id: string;
@@ -65,7 +65,7 @@ export default function Banner({ position = 'home-top' }: BannerProps) {
         >
           <div className="relative w-full h-auto overflow-hidden">
             <Image
-              src={banner.image}
+              src={banner.image?.startsWith('http') ? banner.image : getImageUrl(banner.image)}
               alt={banner.title || 'Banner'}
               width={1920}
               height={600}

@@ -1,7 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getApiUrl, API_BASE_URL } from '@/lib/api';
+import { getApiUrl, getImageUrl } from '@/lib/api';
+
+const FALLBACK_TESTIMONIALS = [
+  { _id: '1', name: 'Rohit Sharma', rating: 5, comment: 'Smells exactly like the luxury brand I always wanted, but at a fraction of the price. People keep asking me what I\'m wearing!', product: undefined as string | undefined },
+  { _id: '2', name: 'Aarav K.', rating: 5, comment: 'Long-lasting, premium quality, and such elegant packaging. Feels like true luxury every time I wear it.', product: undefined as string | undefined },
+  { _id: '3', name: 'Simran M.', rating: 5, comment: 'I\'ve tried so many perfumes, but Musshk really surprised me — classy fragrances that last all day.', product: undefined as string | undefined },
+  { _id: '4', name: 'Aniket J.', rating: 5, comment: 'Musshk perfumes are my favorite. Keeps me fresh and confident for hours!', product: undefined as string | undefined },
+];
 
 interface Testimonial {
   _id: string;
@@ -22,38 +29,15 @@ export default function Testimonials() {
 
   const fetchTestimonials = async () => {
     try {
-      const response = await fetch(getApiUrl('testimonials?featured=true'));
+      const response = await fetch(getApiUrl('testimonials'));
+      if (!response.ok) throw new Error('Failed to fetch');
       const data = await response.json();
-      setTestimonials(data.slice(0, 4) || []);
+      const list = Array.isArray(data) ? data : [];
+      const toShow = list.length > 0 ? list.slice(0, 4) : FALLBACK_TESTIMONIALS;
+      setTestimonials(toShow);
     } catch (error) {
       console.error('Error fetching testimonials:', error);
-      // Fallback to default testimonials
-      setTestimonials([
-        {
-          _id: '1',
-          name: 'Rohit Sharma',
-          rating: 5,
-          comment: 'Smells exactly like the luxury brand I always wanted, but at a fraction of the price. People keep asking me what I\'m wearing!',
-        },
-        {
-          _id: '2',
-          name: 'Aarav K.',
-          rating: 5,
-          comment: 'Long-lasting, premium quality, and such elegant packaging. Feels like true luxury every time I wear it.',
-        },
-        {
-          _id: '3',
-          name: 'Simran M.',
-          rating: 5,
-          comment: 'I\'ve tried so many perfumes, but Musshk really surprised me — classy fragrances that last all day.',
-        },
-        {
-          _id: '4',
-          name: 'Aniket J.',
-          rating: 5,
-          comment: 'Musshk perfumes are my favorite. Keeps me fresh and confident for hours!',
-        },
-      ]);
+      setTestimonials(FALLBACK_TESTIMONIALS);
     } finally {
       setLoading(false);
     }
@@ -82,7 +66,7 @@ export default function Testimonials() {
                 <div className="flex items-center mb-4">
                   {testimonial.image ? (
                     <img
-                      src={`${API_BASE_URL}${testimonial.image}`}
+                      src={getImageUrl(testimonial.image)}
                       alt={testimonial.name}
                       className="w-12 h-12 rounded-full object-cover mr-4"
                     />
