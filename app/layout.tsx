@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import VisitorTracker from "@/components/VisitorTracker";
+import CartDrawer from "@/components/CartDrawer";
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 
@@ -30,6 +31,7 @@ export default function RootLayout({
         <Header />
         <main className="min-h-screen">{children}</main>
         <Footer />
+        <CartDrawer />
       </body>
     </html>
   );

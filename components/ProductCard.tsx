@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { getApiUrl, getImageUrl } from '@/lib/api';
 import { getSessionId } from '@/lib/session';
+import { openCartDrawer } from '@/components/CartDrawer';
 
 interface Product {
   _id: string;
@@ -98,6 +99,8 @@ export default function ProductCard({ product }: ProductCardProps) {
         await checkCartQuantity();
         // Dispatch event to update cart count in header
         window.dispatchEvent(new Event('cartUpdated'));
+        // Open cart drawer so user sees the item and can proceed to checkout
+        openCartDrawer();
       } else {
         const errorData = await response.json();
         console.error('Failed to add to cart:', errorData);

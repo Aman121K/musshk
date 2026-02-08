@@ -22,9 +22,16 @@ export default function MarketplaceSection() {
     const fetchMarketplaces = async () => {
       try {
         const res = await fetch(getApiUrl('marketplaces'));
+        if (!res.ok) {
+          console.warn('[MarketplaceSection] API returned', res.status, res.statusText);
+          setMarketplaces([]);
+          setLoading(false);
+          return;
+        }
         const data = await res.json();
         setMarketplaces(Array.isArray(data) ? data : []);
-      } catch {
+      } catch (e) {
+        console.warn('[MarketplaceSection] Failed to load marketplaces:', e);
         setMarketplaces([]);
       } finally {
         setLoading(false);

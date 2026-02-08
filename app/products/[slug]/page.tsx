@@ -6,6 +6,7 @@ import ProductCard from '@/components/ProductCard';
 import { getApiUrl, API_BASE_URL } from '@/lib/api';
 import { getSessionId } from '@/lib/session';
 import { useToast } from '@/hooks/useToast';
+import { openCartDrawer } from '@/components/CartDrawer';
 
 interface Product {
   _id: string;
@@ -92,6 +93,7 @@ export default function ProductDetailPage() {
       if (response.ok) {
         showToast(`Added ${quantity} item(s) to cart!`, 'success');
         window.dispatchEvent(new Event('cartUpdated'));
+        openCartDrawer();
       } else {
         showToast('Failed to add product to cart', 'error');
       }
