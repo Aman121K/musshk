@@ -45,13 +45,14 @@ export default function CartPage() {
           let itemIdStr = '';
           
           if (item.productId) {
-            if (typeof item.productId === 'object' && item.productId.toString) {
-              productIdStr = item.productId.toString();
-            } else if (typeof item.productId === 'object' && item.productId._id) {
+            // Backend may return populated productId as { _id, name, images }; use _id to avoid "[object Object]"
+            if (typeof item.productId === 'object' && item.productId._id != null) {
               productIdStr = String(item.productId._id);
-            } else {
-              productIdStr = String(item.productId);
+            } else if (typeof item.productId === 'object' && typeof item.productId.toString === 'function') {
+              const s = item.productId.toString();
+              productIdStr = s.startsWith('[object') ? '' : s;
             }
+            if (!productIdStr) productIdStr = String(item.productId);
           }
           
           // Extract item _id if it exists

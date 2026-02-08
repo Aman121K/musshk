@@ -35,13 +35,14 @@ function normalizeCartItems(data: any): Cart {
   const items = data.items.map((item: any) => {
     let productIdStr = '';
     if (item.productId) {
-      if (typeof item.productId === 'object' && item.productId.toString) {
-        productIdStr = item.productId.toString();
-      } else if (typeof item.productId === 'object' && item.productId._id) {
+      // Backend may return populated productId as { _id, name, images }; use _id to avoid "[object Object]"
+      if (typeof item.productId === 'object' && item.productId._id != null) {
         productIdStr = String(item.productId._id);
-      } else {
-        productIdStr = String(item.productId);
+      } else if (typeof item.productId === 'object' && typeof item.productId.toString === 'function') {
+        const s = item.productId.toString();
+        productIdStr = s.startsWith('[object') ? '' : s;
       }
+      if (!productIdStr) productIdStr = String(item.productId);
     }
     let itemIdStr = '';
     if (item._id) {
@@ -60,6 +61,7 @@ export default function CartDrawer() {
   const [isOpen, setIsOpen] = useState(false);
   const [cart, setCart] = useState<Cart>({ items: [], total: 0 });
   const [loading, setLoading] = useState(false);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const fetchCart = useCallback(async () => {
     const sessionId = getSessionId();
@@ -93,36 +95,54 @@ export default function CartDrawer() {
   }, [isOpen, fetchCart]);
 
   const updateQuantity = async (productId: string, quantity: number) => {
+    if (!productId) return;
     if (quantity < 1) {
       removeItem(productId);
       return;
     }
     const sessionId = getSessionId();
+    setUpdatingId(productId);
     try {
-      await fetch(getApiUrl(`cart/${sessionId}/${productId}`), {
+      const res = await fetch(getApiUrl(`cart/${sessionId}/${productId}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ quantity }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error('Update quantity failed', res.status, err);
+        return;
+      }
       await fetchCart();
       window.dispatchEvent(new Event('cartUpdated'));
     } catch (e) {
       console.error('Error updating quantity:', e);
+    } finally {
+      setUpdatingId(null);
     }
   };
 
   const removeItem = async (productId: string) => {
+    if (!productId) return;
     const sessionId = getSessionId();
+    setUpdatingId(productId);
     try {
-      await fetch(getApiUrl(`cart/${sessionId}/${productId}`), {
+      const res = await fetch(getApiUrl(`cart/${sessionId}/${productId}`), {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId, id: productId }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error('Remove item failed', res.status, err);
+        return;
+      }
       await fetchCart();
       window.dispatchEvent(new Event('cartUpdated'));
     } catch (e) {
       console.error('Error removing item:', e);
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -190,23 +210,29 @@ export default function CartDrawer() {
                       <p className="text-sm font-semibold text-gray-900 mt-0.5">Rs. {(item.price * item.quantity).toFixed(2)}</p>
                       <div className="flex items-center gap-2 mt-2">
                         <button
+                          type="button"
                           onClick={() => updateQuantity(productId, item.quantity - 1)}
-                          className="w-7 h-7 rounded border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50"
+                          disabled={updatingId === productId}
+                          className="w-7 h-7 rounded border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                           aria-label="Decrease quantity"
                         >
                           −
                         </button>
                         <span className="w-6 text-center text-sm">{item.quantity}</span>
                         <button
+                          type="button"
                           onClick={() => updateQuantity(productId, item.quantity + 1)}
-                          className="w-7 h-7 rounded border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50"
+                          disabled={updatingId === productId}
+                          className="w-7 h-7 rounded border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                           aria-label="Increase quantity"
                         >
                           +
                         </button>
                         <button
+                          type="button"
                           onClick={() => removeItem(productId)}
-                          className="ml-2 text-red-500 hover:text-red-700 text-sm"
+                          disabled={updatingId === productId}
+                          className="ml-2 text-red-500 hover:text-red-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                           aria-label="Remove item"
                         >
                           Remove
