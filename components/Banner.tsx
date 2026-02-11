@@ -47,9 +47,9 @@ export default function Banner({ position = 'home-top' }: BannerProps) {
     }
   };
 
-  // Reserve space to avoid layout shift (CLS): same aspect ratio as banner
+  // Reserve space to avoid layout shift (CLS): same proportions as banner (2:1)
   if (loading) {
-    return <div className="w-full min-h-[180px] sm:min-h-[240px] bg-gray-100" aria-hidden />;
+    return <div className="w-screen relative left-1/2 -translate-x-1/2 min-h-[220px] sm:min-h-[280px] bg-gray-100" aria-hidden />;
   }
 
   if (banners.length === 0) {
@@ -57,21 +57,21 @@ export default function Banner({ position = 'home-top' }: BannerProps) {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-screen relative left-1/2 -translate-x-1/2">
       {banners.map((banner) => (
         <Link
           key={banner._id}
           href={banner.link || '#'}
           className="block w-full relative group"
         >
-          <div className="relative w-full aspect-[32/10] min-h-[180px] sm:min-h-[240px] overflow-hidden bg-gray-100 flex items-center justify-center">
+          <div className="relative w-full aspect-[2/1] min-h-[220px] sm:min-h-[280px] overflow-hidden bg-gray-100 flex items-center justify-center">
             <Image
               src={banner.image?.startsWith('http') ? banner.image : getImageUrl(banner.image)}
               alt={banner.title || 'Banner'}
               fill
               sizes="100vw"
               quality={80}
-              className="object-contain transition-transform duration-300 group-hover:scale-105"
+              className="object-contain object-center transition-transform duration-300 group-hover:scale-105"
               priority
             />
           </div>
