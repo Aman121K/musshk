@@ -232,12 +232,14 @@ function AccountContent() {
                       <div className="mb-6">
                         <h4 className="text-sm font-semibold text-gray-900 mb-3">Items ({order.items.length})</h4>
                         <div className="space-y-3">
-                          {order.items.map((item: any, index: number) => (
-                            <div key={index} className="flex items-start gap-4 p-3 bg-gray-50 rounded-lg">
+                          {order.items.map((item: any, index: number) => {
+                            const itemImage = item.image ?? item.product?.images?.[0];
+                            return (
+                            <div key={item._id ?? index} className="flex items-start gap-4 p-3 bg-gray-50 rounded-lg">
                               <div className="relative flex-shrink-0 w-16 h-16 bg-white rounded-md border border-gray-200 overflow-hidden">
-                                {item.image && !failedOrderImage[`${order._id}-${index}`] ? (
+                                {itemImage && !failedOrderImage[`${order._id}-${index}`] ? (
                                   <Image
-                                    src={item.image.startsWith('http') ? item.image : getImageUrl(item.image)}
+                                    src={typeof itemImage === 'string' && itemImage.startsWith('http') ? itemImage : getImageUrl(itemImage)}
                                     alt={item.name}
                                     fill
                                     sizes="64px"
@@ -267,7 +269,7 @@ function AccountContent() {
                                 )}
                               </div>
                             </div>
-                          ))}
+                          );})}
                         </div>
                       </div>
 
