@@ -143,12 +143,12 @@ export default function ProductDetailPage() {
       <div className="grid md:grid-cols-2 gap-8 mb-12">
         {/* Product Images: main image + row of all thumbnails (click to set main) */}
         <div>
-          <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
+          <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4 flex items-center justify-center">
             {product.images && product.images.length > 0 ? (
               <img
                 src={getImageUrl(product.images[selectedImageIndex])}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><rect fill="#f3f4f6" width="400" height="400"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9ca3af" font-size="48">✨</text></svg>');
                 }}
@@ -173,7 +173,7 @@ export default function ProductDetailPage() {
                   <img
                     src={getImageUrl(image)}
                     alt={`${product.name} ${index + 1}`}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect fill="#f3f4f6" width="80" height="80"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9ca3af" font-size="24">✨</text></svg>');
                     }}
