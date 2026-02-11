@@ -64,14 +64,14 @@ export default function Banner({ position = 'home-top' }: BannerProps) {
           href={banner.link || '#'}
           className="block w-full relative group"
         >
-          <div className="relative w-full aspect-[32/10] min-h-[180px] sm:min-h-[240px] overflow-hidden bg-gray-100">
+          <div className="relative w-full aspect-[32/10] min-h-[180px] sm:min-h-[240px] overflow-hidden bg-gray-100 flex items-center justify-center">
             <Image
               src={banner.image?.startsWith('http') ? banner.image : getImageUrl(banner.image)}
               alt={banner.title || 'Banner'}
               fill
               sizes="100vw"
               quality={80}
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              className="object-contain transition-transform duration-300 group-hover:scale-105"
               priority
             />
           </div>

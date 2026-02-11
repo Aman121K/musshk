@@ -89,7 +89,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           size: product.sizes && product.sizes.length > 0 ? product.sizes[0].size : '100 ml',
           price: product.sizes && product.sizes.length > 0 ? product.sizes[0].price : product.price,
           quantity: 1,
-          image: product.images[0] || '',
+          image: product.images?.[0] ?? '',
         }),
       });
 
@@ -200,20 +200,26 @@ export default function ProductCard({ product }: ProductCardProps) {
         <Link href={`/products/${product.slug}`} className="block">
           {/* Product Image */}
           <div className="relative aspect-square bg-gray-100 overflow-hidden">
-            {product.images && product.images.length > 0 ? (
-              <Image
-                src={getImageUrl(product.images[0])}
-                alt={product.name}
-                fill
-                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                quality={80}
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-300">
-                <span className="text-4xl">✨</span>
-              </div>
-            )}
+            {(() => {
+              const imgSrc = product.images?.length ? getImageUrl(product.images[0]) : '';
+              if (imgSrc) {
+                return (
+                  <Image
+                    src={imgSrc}
+                    alt={product.name}
+                    fill
+                    sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                    quality={80}
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                );
+              }
+              return (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-300">
+                  <span className="text-4xl">✨</span>
+                </div>
+              );
+            })()}
             {product.soldOut && (
               <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-semibold">
                 Sold Out

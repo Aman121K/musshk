@@ -53,11 +53,27 @@ export default function ProductDetailPage() {
     }
   }, [params.slug]);
 
+  const normalizeImages = (raw: unknown): string[] => {
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((item) => (typeof item === 'string' ? item : (item?.url ?? item?.src ?? '')))
+      .filter((s): s is string => typeof s === 'string' && s.length > 0);
+  };
+
   const fetchProduct = async () => {
     try {
       const response = await fetch(getApiUrl(`products/${params.slug}`));
       const data = await response.json();
-      setProduct(data);
+      if (!response.ok || !data || typeof data._id === 'undefined') {
+        setProduct(null);
+        setLoading(false);
+        return;
+      }
+      const productData: Product = {
+        ...data,
+        images: normalizeImages(data.images),
+      };
+      setProduct(productData);
       setSelectedImageIndex(0);
       if (data.sizes && data.sizes.length > 0) {
         setSelectedSize(data.sizes[0].size);
@@ -66,9 +82,15 @@ export default function ProductDetailPage() {
       // Fetch related products
       const relatedResponse = await fetch(getApiUrl(`products?category=${data.category}&limit=4`));
       const relatedData = await relatedResponse.json();
-      setRelatedProducts(relatedData.products?.filter((p: Product) => p._id !== data._id) || []);
+      const relatedList = relatedData.products || [];
+      setRelatedProducts(
+        relatedList
+          .filter((p: Product) => p && p._id !== data._id)
+          .map((p: Product) => ({ ...p, images: normalizeImages(p.images) }))
+      );
     } catch (error) {
       console.error('Error fetching product:', error);
+      setProduct(null);
     } finally {
       setLoading(false);
     }
@@ -94,7 +116,7 @@ export default function ProductDetailPage() {
           size: selectedSize || '100 ml',
           price: price,
           quantity: quantity,
-          image: product.images[0] || '',
+          image: product.images?.[0] ?? '',
         }),
       });
 
@@ -145,43 +167,57 @@ export default function ProductDetailPage() {
         {/* Product Images: main image + row of all thumbnails (click to set main) */}
         <div>
           <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4 flex items-center justify-center">
-            {product.images && product.images.length > 0 ? (
-              <Image
-                src={getImageUrl(product.images[selectedImageIndex])}
-                alt={product.name}
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                quality={85}
-                className="object-contain"
-                priority
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-300">
-                <span className="text-6xl">✨</span>
-              </div>
-            )}
+            {(() => {
+              const mainSrc = product.images?.length
+                ? getImageUrl(product.images[Math.min(selectedImageIndex, product.images.length - 1)])
+                : '';
+              if (mainSrc) {
+                return (
+                  <Image
+                    src={mainSrc}
+                    alt={product.name}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    quality={85}
+                    className="object-contain"
+                    priority
+                    unoptimized={mainSrc.startsWith('data:')}
+                  />
+                );
+              }
+              return (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-300">
+                  <span className="text-6xl">✨</span>
+                </div>
+              );
+            })()}
           </div>
           {product.images && product.images.length > 1 && (
             <div className="flex flex-wrap gap-2">
-              {product.images.map((image, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => setSelectedImageIndex(index)}
-                  className={`relative aspect-square w-20 h-20 rounded-lg overflow-hidden border-2 transition flex-shrink-0 ${
-                    selectedImageIndex === index ? 'border-primary-600 ring-2 ring-primary-200' : 'border-gray-200 hover:border-primary-300'
-                  }`}
-                >
-                  <Image
-                    src={getImageUrl(image)}
-                    alt={`${product.name} ${index + 1}`}
-                    fill
-                    sizes="80px"
-                    quality={75}
-                    className="object-contain"
-                  />
-                </button>
-              ))}
+              {product.images.map((image, index) => {
+                const thumbSrc = getImageUrl(image);
+                if (!thumbSrc) return null;
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`relative aspect-square w-20 h-20 rounded-lg overflow-hidden border-2 transition flex-shrink-0 ${
+                      selectedImageIndex === index ? 'border-primary-600 ring-2 ring-primary-200' : 'border-gray-200 hover:border-primary-300'
+                    }`}
+                  >
+                    <Image
+                      src={thumbSrc}
+                      alt={`${product.name} ${index + 1}`}
+                      fill
+                      sizes="80px"
+                      quality={75}
+                      className="object-contain"
+                      unoptimized={thumbSrc.startsWith('data:')}
+                    />
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
@@ -334,7 +370,7 @@ export default function ProductDetailPage() {
 
             <div>
               <h3 className="font-semibold mb-2">Description</h3>
-              <p className="text-gray-600 leading-relaxed whitespace-pre-line">{product.description}</p>
+              <p className="text-gray-600 leading-relaxed whitespace-pre-line">{product.description ?? ''}</p>
             </div>
 
 
