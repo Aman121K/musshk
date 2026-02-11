@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
-import { getApiUrl, API_BASE_URL } from '@/lib/api';
+import { getApiUrl, getImageUrl } from '@/lib/api';
 import { getSessionId } from '@/lib/session';
 import { useToast } from '@/hooks/useToast';
 import { openCartDrawer } from '@/components/CartDrawer';
@@ -22,9 +22,14 @@ interface Product {
   rating: number;
   reviewCount: number;
   notes?: string[];
+  topNotes?: string[];
+  heartNotes?: string[];
+  baseNotes?: string[];
+  otherNotes?: string[];
   sizes?: Array<{ size: string; price: number; stock: number }>;
   category?: string;
   tags?: string[];
+  bulletPoints?: string[];
   stock?: number;
   featured?: boolean;
   bestSeller?: boolean;
@@ -38,6 +43,7 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const { showToast, ToastComponent } = useToast();
 
   useEffect(() => {
@@ -51,10 +57,11 @@ export default function ProductDetailPage() {
       const response = await fetch(getApiUrl(`products/${params.slug}`));
       const data = await response.json();
       setProduct(data);
+      setSelectedImageIndex(0);
       if (data.sizes && data.sizes.length > 0) {
         setSelectedSize(data.sizes[0].size);
       }
-      
+
       // Fetch related products
       const relatedResponse = await fetch(getApiUrl(`products?category=${data.category}&limit=4`));
       const relatedData = await relatedResponse.json();
@@ -134,16 +141,16 @@ export default function ProductDetailPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="grid md:grid-cols-2 gap-8 mb-12">
-        {/* Product Images */}
+        {/* Product Images: main image + row of all thumbnails (click to set main) */}
         <div>
           <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
             {product.images && product.images.length > 0 ? (
               <img
-                src={product.images[0].startsWith('http') ? product.images[0] : `${API_BASE_URL}${product.images[0]}`}
+                src={getImageUrl(product.images[selectedImageIndex])}
                 alt={product.name}
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/placeholder-image.jpg';
+                  (e.target as HTMLImageElement).src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><rect fill="#f3f4f6" width="400" height="400"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9ca3af" font-size="48">✨</text></svg>');
                 }}
               />
             ) : (
@@ -153,18 +160,25 @@ export default function ProductDetailPage() {
             )}
           </div>
           {product.images && product.images.length > 1 && (
-            <div className="grid grid-cols-4 gap-2">
-              {product.images.slice(1, 5).map((image, index) => (
-                <div key={index} className="aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-75 transition">
-                  <img 
-                    src={image.startsWith('http') ? image : `${API_BASE_URL}${image}`} 
-                    alt={`${product.name} ${index + 2}`} 
+            <div className="flex flex-wrap gap-2">
+              {product.images.map((image, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => setSelectedImageIndex(index)}
+                  className={`aspect-square w-20 h-20 rounded-lg overflow-hidden border-2 transition flex-shrink-0 ${
+                    selectedImageIndex === index ? 'border-primary-600 ring-2 ring-primary-200' : 'border-gray-200 hover:border-primary-300'
+                  }`}
+                >
+                  <img
+                    src={getImageUrl(image)}
+                    alt={`${product.name} ${index + 1}`}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/placeholder-image.jpg';
+                      (e.target as HTMLImageElement).src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect fill="#f3f4f6" width="80" height="80"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9ca3af" font-size="24">✨</text></svg>');
                     }}
                   />
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -173,7 +187,7 @@ export default function ProductDetailPage() {
         {/* Product Info */}
         <div>
           <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
-          
+
           {product.reviewCount > 0 && (
             <div className="flex items-center mb-4">
               <div className="flex text-yellow-400">
@@ -213,11 +227,10 @@ export default function ProductDetailPage() {
                   <button
                     key={size.size}
                     onClick={() => setSelectedSize(size.size)}
-                    className={`px-4 py-2 border rounded-md transition ${
-                      selectedSize === size.size
+                    className={`px-4 py-2 border rounded-md transition ${selectedSize === size.size
                         ? 'border-primary-600 bg-primary-50 text-primary-600'
                         : 'border-gray-300 hover:border-primary-300'
-                    }`}
+                      }`}
                   >
                     {size.size}
                   </button>
@@ -226,12 +239,63 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {product.notes && product.notes.length > 0 && (
-            <div className="mb-6">
-              <h3 className="font-semibold mb-2">Notes:</h3>
-              <p className="text-gray-600">{product.notes.join(' | ')}</p>
+          {product.shortDescription && (
+            <div>
+              <h3 className="font-semibold mb-2">Quick Overview</h3>
+              <p className="text-gray-600">{product.shortDescription}</p>
             </div>
           )}
+          {/* All fragrance notes from admin (Top, Heart, Base, Other or legacy notes) */}
+          {(product.topNotes?.length || product.heartNotes?.length || product.baseNotes?.length || product.otherNotes?.length || (product.notes?.length ?? 0)) > 0 && (
+            <div className="mb-6">
+              <h3 className="font-semibold mb-3">Fragrance Notes</h3>
+              <div className="space-y-3 text-gray-700">
+                {product.topNotes && product.topNotes.length > 0 && (
+                  <div>
+                    <span className="font-medium text-gray-900">Top notes:</span>
+                    <p className="mt-0.5">{product.topNotes.join(', ')}</p>
+                  </div>
+                )}
+                {product.heartNotes && product.heartNotes.length > 0 && (
+                  <div>
+                    <span className="font-medium text-gray-900">Heart notes:</span>
+                    <p className="mt-0.5">{product.heartNotes.join(', ')}</p>
+                  </div>
+                )}
+                {product.baseNotes && product.baseNotes.length > 0 && (
+                  <div>
+                    <span className="font-medium text-gray-900">Base notes:</span>
+                    <p className="mt-0.5">{product.baseNotes.join(', ')}</p>
+                  </div>
+                )}
+                {product.otherNotes && product.otherNotes.length > 0 && (
+                  <div>
+                    <span className="font-medium text-gray-900">Other notes:</span>
+                    <p className="mt-0.5">{product.otherNotes.join(', ')}</p>
+                  </div>
+                )}
+                {(!product.topNotes?.length && !product.heartNotes?.length && !product.baseNotes?.length && !product.otherNotes?.length) && product.notes && product.notes.length > 0 && (
+                  <p>{product.notes.join(' | ')}</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Bullet points (full details from admin) */}
+          {product.bulletPoints && product.bulletPoints.length > 0 && (
+            <div className="mb-6">
+              <h3 className="font-semibold mb-3">Key features</h3>
+              <ul className="space-y-2">
+                {product.bulletPoints.map((point, index) => (
+                  <li key={index} className="flex items-start gap-2 text-gray-700">
+                    <span className="text-primary-600 mt-1 shrink-0">•</span>
+                    <span className="leading-relaxed">{point}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
 
           <div className="mb-6">
             <label className="block text-sm font-medium mb-2">Quantity</label>
@@ -255,27 +319,23 @@ export default function ProductDetailPage() {
           <button
             onClick={handleAddToCart}
             disabled={product.soldOut}
-            className={`w-full py-3 rounded-md font-semibold text-lg transition ${
-              product.soldOut
+            className={`w-full py-3 rounded-md font-semibold text-lg transition ${product.soldOut
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 : 'bg-primary-600 text-white hover:bg-primary-700'
-            }`}
+              }`}
           >
             {product.soldOut ? 'Sold Out' : 'Add to cart'}
           </button>
 
           <div className="mt-8 space-y-6">
-            {product.shortDescription && (
-              <div>
-                <h3 className="font-semibold mb-2">Quick Overview</h3>
-                <p className="text-gray-600">{product.shortDescription}</p>
-              </div>
-            )}
-            
+
+
             <div>
               <h3 className="font-semibold mb-2">Description</h3>
               <p className="text-gray-600 leading-relaxed whitespace-pre-line">{product.description}</p>
             </div>
+
+
 
             {product.tags && product.tags.length > 0 && (
               <div>
