@@ -47,12 +47,13 @@ export default function Banner({ position = 'home-top' }: BannerProps) {
     }
   };
 
+  // Reserve space to avoid layout shift (CLS): same aspect ratio as banner
   if (loading) {
-    return null; // Don't show anything while loading
+    return <div className="w-full min-h-[180px] sm:min-h-[240px] bg-gray-100" aria-hidden />;
   }
 
   if (banners.length === 0) {
-    return null; // Don't show anything if no banners
+    return null;
   }
 
   return (
@@ -63,14 +64,14 @@ export default function Banner({ position = 'home-top' }: BannerProps) {
           href={banner.link || '#'}
           className="block w-full relative group"
         >
-          <div className="relative w-full h-auto overflow-hidden">
+          <div className="relative w-full aspect-[32/10] min-h-[180px] sm:min-h-[240px] overflow-hidden bg-gray-100">
             <Image
               src={banner.image?.startsWith('http') ? banner.image : getImageUrl(banner.image)}
               alt={banner.title || 'Banner'}
-              width={1920}
-              height={600}
+              fill
               sizes="100vw"
-              className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
+              quality={80}
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
               priority
             />
           </div>

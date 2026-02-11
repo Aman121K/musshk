@@ -77,6 +77,7 @@ export default function CollectionSection() {
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
                       sizes="(max-width: 768px) 50vw, 25vw"
+                      quality={80}
                       unoptimized={imageUrl.startsWith('http://localhost')}
                       onError={() => setFailed((f) => ({ ...f, [collection.name]: true }))}
                     />

@@ -151,6 +151,7 @@ export default function ProductDetailPage() {
                 alt={product.name}
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
+                quality={85}
                 className="object-contain"
                 priority
               />
@@ -176,6 +177,7 @@ export default function ProductDetailPage() {
                     alt={`${product.name} ${index + 1}`}
                     fill
                     sizes="80px"
+                    quality={75}
                     className="object-contain"
                   />
                 </button>
