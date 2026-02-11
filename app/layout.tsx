@@ -100,6 +100,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="preconnect" href="https://api.musshk.com" />
+        <link rel="preconnect" href="https://musshk-images.s3.ap-south-1.amazonaws.com" crossOrigin="anonymous" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdOrganization) }}

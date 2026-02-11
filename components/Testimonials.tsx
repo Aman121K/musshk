@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { getApiUrl, getImageUrl } from '@/lib/api';
 
 const FALLBACK_TESTIMONIALS = [
@@ -65,10 +66,12 @@ export default function Testimonials() {
               >
                 <div className="flex items-center mb-4">
                   {testimonial.image ? (
-                    <img
+                    <Image
                       src={getImageUrl(testimonial.image)}
                       alt={testimonial.name}
-                      className="w-12 h-12 rounded-full object-cover mr-4"
+                      width={48}
+                      height={48}
+                      className="rounded-full object-cover mr-4"
                     />
                   ) : (
                     <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mr-4">

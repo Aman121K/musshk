@@ -69,9 +69,9 @@ export default function Banner({ position = 'home-top' }: BannerProps) {
               alt={banner.title || 'Banner'}
               width={1920}
               height={600}
+              sizes="100vw"
               className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
               priority
-              unoptimized
             />
           </div>
         </Link>

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { getApiUrl, getImageUrl } from '@/lib/api';
 import { getSessionId } from '@/lib/session';
@@ -200,15 +201,12 @@ export default function ProductCard({ product }: ProductCardProps) {
           {/* Product Image */}
           <div className="relative aspect-square bg-gray-100 overflow-hidden">
             {product.images && product.images.length > 0 ? (
-              <img
+              <Image
                 src={getImageUrl(product.images[0])}
                 alt={product.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                onError={(e) => {
-                  const t = e.target as HTMLImageElement;
-                  t.onerror = null;
-                  t.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><rect fill="%23f5eef3" width="400" height="400"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23965087" font-family="sans-serif" font-size="24">Musshk</text></svg>');
-                }}
+                fill
+                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-300">
