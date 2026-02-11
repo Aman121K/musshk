@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getApiUrl, API_BASE_URL } from '@/lib/api';
+import Image from 'next/image';
+import { getApiUrl, API_BASE_URL, getImageUrl } from '@/lib/api';
 
 interface BlogPost {
   _id: string;
@@ -125,14 +126,14 @@ export default function BlogDetailPage() {
 
       {/* Blog Image */}
       {blog.image && (
-        <div className="mb-8 rounded-lg overflow-hidden">
-          <img
-            src={blog.image.startsWith('http') ? blog.image : `${API_BASE_URL}${blog.image}`}
+        <div className="relative mb-8 rounded-lg overflow-hidden aspect-video w-full">
+          <Image
+            src={blog.image.startsWith('http') ? blog.image : getImageUrl(blog.image)}
             alt={blog.title}
-            className="w-full h-auto object-cover"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = '/placeholder-image.jpg';
-            }}
+            fill
+            sizes="(max-width: 768px) 100vw, 900px"
+            className="object-cover"
+            priority={false}
           />
         </div>
       )}

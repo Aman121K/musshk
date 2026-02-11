@@ -86,3 +86,9 @@ textarea:focus-visible {
 .animate-slide-in-right {
   animation: slide-in-right 0.3s ease-out;
 }
+
+/* Reduce layout work for below-the-fold content (helps Lighthouse reflow) */
+.content-visibility-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px;
+}

@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getApiUrl } from '@/lib/api';
+import Image from 'next/image';
+import { getApiUrl, getImageUrl } from '@/lib/api';
 import { getSessionId } from '@/lib/session';
 import { useToast } from '@/hooks/useToast';
 import { useModal } from '@/hooks/useModal';
@@ -496,9 +497,16 @@ export default function CheckoutPage() {
                 <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
                   {cart.items.map((item: any) => (
                     <div key={item.productId} className="flex items-start space-x-3 pb-3 border-b border-gray-100 last:border-0">
-                      <div className="flex-shrink-0 w-16 h-16 bg-gray-100 rounded-md overflow-hidden">
+                      <div className="relative flex-shrink-0 w-16 h-16 bg-gray-100 rounded-md overflow-hidden">
                         {item.image ? (
-                          <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                          <Image
+                            src={item.image.startsWith('http') ? item.image : getImageUrl(item.image)}
+                            alt={item.name}
+                            fill
+                            sizes="64px"
+                            className="object-cover"
+                            loading="lazy"
+                          />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <span className="text-xl">✨</span>

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getApiUrl, API_BASE_URL } from '@/lib/api';
+import Image from 'next/image';
+import { getApiUrl, API_BASE_URL, getImageUrl } from '@/lib/api';
 
 interface BlogPost {
   _id: string;
@@ -121,14 +122,14 @@ export default function BlogPage() {
               className="bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
             >
               {post.image ? (
-                <div className="h-48 bg-gray-100 overflow-hidden">
-                  <img
-                    src={post.image.startsWith('http') ? post.image : `${API_BASE_URL}${post.image}`}
+                <div className="relative h-48 bg-gray-100 overflow-hidden">
+                  <Image
+                    src={post.image.startsWith('http') ? post.image : getImageUrl(post.image)}
                     alt={post.title}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/placeholder-image.jpg';
-                    }}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 400px"
+                    className="object-cover"
+                    loading="lazy"
                   />
                 </div>
               ) : (

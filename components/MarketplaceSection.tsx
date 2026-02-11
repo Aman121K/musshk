@@ -42,7 +42,7 @@ export default function MarketplaceSection() {
 
   if (loading) {
     return (
-      <section className="py-16 bg-gradient-to-b from-gray-50 to-white border-t border-gray-200">
+      <section className="py-16 bg-gradient-to-b from-gray-50 to-white border-t border-gray-200 content-visibility-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl md:text-3xl font-semibold text-center text-gray-800 mb-10 tracking-wide">
             WE&apos;RE ALSO AVAILABLE AT
@@ -56,7 +56,7 @@ export default function MarketplaceSection() {
   if (marketplaces.length === 0) return null;
 
   return (
-    <section className="py-16 bg-gradient-to-b from-gray-50 to-white border-t border-gray-200">
+    <section className="py-16 bg-gradient-to-b from-gray-50 to-white border-t border-gray-200 content-visibility-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-2xl md:text-3xl font-semibold text-center text-gray-800 mb-10 tracking-wide">
           WE&apos;RE ALSO AVAILABLE AT

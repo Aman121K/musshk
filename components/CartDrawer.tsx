@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getApiUrl, getImageUrl } from '@/lib/api';
 import { getSessionId } from '@/lib/session';
 
@@ -197,9 +198,16 @@ export default function CartDrawer() {
                 const imgSrc = item.image ? (item.image.startsWith('http') ? item.image : getImageUrl(item.image)) : '';
                 return (
                   <li key={productId} className="flex gap-3 py-3 border-b border-gray-100 last:border-0">
-                    <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                    <div className="relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                       {imgSrc ? (
-                        <img src={imgSrc} alt={item.name} className="w-full h-full object-cover" />
+                        <Image
+                          src={imgSrc}
+                          alt={item.name}
+                          fill
+                          sizes="80px"
+                          className="object-cover"
+                          loading="lazy"
+                        />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-2xl">✨</div>
                       )}

@@ -13,6 +13,7 @@ function AccountContent() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'orders');
+  const [failedOrderImage, setFailedOrderImage] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     checkAuth();
@@ -233,17 +234,16 @@ function AccountContent() {
                         <div className="space-y-3">
                           {order.items.map((item: any, index: number) => (
                             <div key={index} className="flex items-start gap-4 p-3 bg-gray-50 rounded-lg">
-                              <div className="flex-shrink-0 w-16 h-16 bg-white rounded-md border border-gray-200 overflow-hidden">
-                                {item.image ? (
-                                  <img 
-                                    src={item.image.startsWith('http') ? item.image : getImageUrl(item.image)} 
-                                    alt={item.name} 
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                      const t = e.target as HTMLImageElement;
-                                      t.onerror = null;
-                                      t.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><rect fill="%23f5eef3" width="64" height="64"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23965087" font-size="24">✨</text></svg>');
-                                    }}
+                              <div className="relative flex-shrink-0 w-16 h-16 bg-white rounded-md border border-gray-200 overflow-hidden">
+                                {item.image && !failedOrderImage[`${order._id}-${index}`] ? (
+                                  <Image
+                                    src={item.image.startsWith('http') ? item.image : getImageUrl(item.image)}
+                                    alt={item.name}
+                                    fill
+                                    sizes="64px"
+                                    className="object-cover"
+                                    loading="lazy"
+                                    onError={() => setFailedOrderImage((prev) => ({ ...prev, [`${order._id}-${index}`]: true }))}
                                   />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center bg-gray-100">
