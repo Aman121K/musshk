@@ -56,10 +56,10 @@ export default function CollectionSection() {
   }, []);
 
   return (
-    <section className="py-16 bg-gray-50 content-visibility-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-bold text-center mb-12">Our Exclusive Collections</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <section className="py-20 md:py-24 bg-[#f7f5f3] content-visibility-auto">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10">
+        <h2 className="font-heading text-3xl md:text-4xl font-medium text-aesop-ink text-center mb-14 tracking-tight">Our Exclusive Collections</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
           {collections.map((collection) => {
             const imageUrl = images[collection.name];
             const showPlaceholder = !imageUrl || failed[collection.name];
@@ -67,9 +67,9 @@ export default function CollectionSection() {
               <Link
                 key={collection.name}
                 href={collection.href}
-                className="group relative overflow-hidden rounded-lg bg-white shadow-md hover:shadow-xl transition-shadow"
+                className="group relative overflow-hidden bg-white transition-opacity hover:opacity-95"
               >
-                <div className="aspect-square bg-gradient-to-br from-primary-100 to-primary-300 relative overflow-hidden">
+                <div className="aspect-square bg-[#f5f3f0] relative overflow-hidden">
                   {imageUrl && !failed[collection.name] && (
                     <Image
                       src={imageUrl}
@@ -86,11 +86,11 @@ export default function CollectionSection() {
                     <span className="absolute inset-0 flex items-center justify-center text-2xl">✨</span>
                   )}
                 </div>
-                <div className="p-4 text-center">
-                  <h3 className="font-semibold text-gray-900 group-hover:text-primary-600 transition">
+                <div className="p-5 text-center">
+                  <h3 className="font-heading font-medium text-aesop-ink text-base group-hover:opacity-80 transition">
                     {collection.name}
                   </h3>
-                  <p className="text-sm text-primary-600 mt-2">Explore →</p>
+                  <p className="text-[11px] text-aesop-graphite mt-2 tracking-[0.12em] uppercase">Explore</p>
                 </div>
               </Link>
             );

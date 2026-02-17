@@ -49,7 +49,7 @@ export default function Banner({ position = 'home-top' }: BannerProps) {
 
   // Reserve space to avoid layout shift (CLS): same proportions as banner (2:1)
   if (loading) {
-    return <div className="w-screen relative left-1/2 -translate-x-1/2 min-h-[220px] sm:min-h-[280px] bg-gray-100" aria-hidden />;
+    return <div className="w-screen relative left-1/2 -translate-x-1/2 min-h-[220px] sm:min-h-[320px] bg-[#f5f3f0]" aria-hidden />;
   }
 
   if (banners.length === 0) {
@@ -64,7 +64,7 @@ export default function Banner({ position = 'home-top' }: BannerProps) {
           href={banner.link || '#'}
           className="block w-full relative group"
         >
-          <div className="relative w-full aspect-[2/1] min-h-[220px] sm:min-h-[280px] overflow-hidden bg-gray-100 flex items-center justify-center">
+          <div className="relative w-full aspect-[2/1] min-h-[220px] sm:min-h-[320px] overflow-hidden bg-[#f5f3f0] flex items-center justify-center">
             <Image
               src={banner.image?.startsWith('http') ? banner.image : getImageUrl(banner.image)}
               alt={banner.title || 'Banner'}

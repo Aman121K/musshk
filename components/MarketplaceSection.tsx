@@ -42,10 +42,10 @@ export default function MarketplaceSection() {
 
   if (loading) {
     return (
-      <section className="py-16 bg-gradient-to-b from-gray-50 to-white border-t border-gray-200 content-visibility-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl md:text-3xl font-semibold text-center text-gray-800 mb-10 tracking-wide">
-            WE&apos;RE ALSO AVAILABLE AT
+      <section className="py-20 bg-[#f7f5f3] border-t border-black/5 content-visibility-auto">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10">
+          <h2 className="font-heading text-2xl md:text-3xl font-medium text-center text-aesop-ink mb-12 tracking-[0.12em] uppercase">
+            We&apos;re also available at
           </h2>
           <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 lg:gap-16 min-h-[60px]" />
         </div>
@@ -56,10 +56,10 @@ export default function MarketplaceSection() {
   if (marketplaces.length === 0) return null;
 
   return (
-    <section className="py-16 bg-gradient-to-b from-gray-50 to-white border-t border-gray-200 content-visibility-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-2xl md:text-3xl font-semibold text-center text-gray-800 mb-10 tracking-wide">
-          WE&apos;RE ALSO AVAILABLE AT
+    <section className="py-20 bg-[#f7f5f3] border-t border-black/5 content-visibility-auto">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10">
+        <h2 className="font-heading text-2xl md:text-3xl font-medium text-center text-aesop-ink mb-12 tracking-[0.12em] uppercase">
+          We&apos;re also available at
         </h2>
         <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 lg:gap-16">
           {marketplaces.map((marketplace) => {

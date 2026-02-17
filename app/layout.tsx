@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
+import { Source_Sans_3, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -7,7 +7,17 @@ import VisitorTracker from "@/components/VisitorTracker";
 import CartDrawer from "@/components/CartDrawer";
 import { SITE_URL, SITE_NAME, SITE_DEFAULT_DESCRIPTION, SITE_DEFAULT_OG_IMAGE } from "@/lib/site";
 
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
+// Diptyque-inspired typography: Cormorant Garamond (editorial serif) + Source Sans 3 (clean body)
+const sourceSans = Source_Sans_3({
+  subsets: ["latin"],
+  variable: "--font-source-sans",
+  weight: ["300", "400", "500", "600", "700"],
+});
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  variable: "--font-cormorant",
+  weight: ["400", "500", "600", "700"],
+});
 
 const fullOgImage = SITE_URL + SITE_DEFAULT_OG_IMAGE;
 
@@ -111,7 +121,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdWebsite) }}
         />
       </head>
-      <body className={outfit.className}>
+      <body className={`${sourceSans.variable} ${cormorant.variable} font-sans antialiased`}>
         <VisitorTracker />
         <Header />
         <main className="min-h-screen">{children}</main>

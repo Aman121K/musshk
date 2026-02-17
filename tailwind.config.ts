@@ -8,6 +8,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["var(--font-source-sans)", "system-ui", "sans-serif"],
+        heading: ["var(--font-cormorant)", "Georgia", "serif"],
+      },
       colors: {
         primary: {
           50: "#f5eef3",
@@ -27,6 +31,21 @@ const config: Config = {
           input: "#2d2d44",
           border: "#2d2d44",
         },
+        // Aesop-style neutrals
+        aesop: {
+          cream: "#f7f5f3",
+          stone: "#e8e6e3",
+          ink: "#1a1a1a",
+          graphite: "#4a4a4a",
+        },
+      },
+      letterSpacing: {
+        "aesop-tight": "-0.02em",
+        "aesop-wide": "0.08em",
+        "diptyque": "0.12em",
+      },
+      borderRadius: {
+        "diptyque": "0",
       },
     },
   },

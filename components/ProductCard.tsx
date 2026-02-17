@@ -196,10 +196,10 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div className="group">
-      <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+      <div className="bg-white overflow-hidden transition-opacity hover:opacity-95">
         <Link href={`/products/${product.slug}`} className="block">
-          {/* Product Image */}
-          <div className="relative aspect-square bg-gray-100 overflow-hidden">
+          {/* Product Image - Diptyque: image-first, minimal frame */}
+          <div className="relative aspect-square bg-[#f5f3f0] overflow-hidden">
             {(() => {
               const imgSrc = product.images?.length ? getImageUrl(product.images[0]) : '';
               if (imgSrc) {
@@ -215,47 +215,47 @@ export default function ProductCard({ product }: ProductCardProps) {
                 );
               }
               return (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-300">
+                <div className="w-full h-full flex items-center justify-center bg-aesop-stone/10">
                   <span className="text-4xl">✨</span>
                 </div>
               );
             })()}
             {product.soldOut && (
-              <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-semibold">
+              <div className="absolute top-3 right-3 bg-black text-white px-2.5 py-1 text-[10px] font-medium tracking-[0.15em] uppercase">
                 Sold Out
               </div>
             )}
           </div>
 
-          {/* Product Info */}
-          <div className="p-4">
-            <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-primary-600 transition">
+          {/* Product Info - Diptyque editorial: clean, serif headings */}
+          <div className="pt-5 pb-4 px-1">
+            <h3 className="font-heading font-medium text-aesop-ink text-base mb-1 line-clamp-2 tracking-tight group-hover:opacity-80 transition">
               {product.name}
             </h3>
 
             {/* Reviews */}
             {product.reviewCount > 0 && (
-              <div className="flex items-center mb-2">
-                <div className="flex text-yellow-400">
+              <div className="flex items-center mb-3">
+                <div className="flex text-amber-700/70">
                   {[...Array(5)].map((_, i) => (
                     <svg
                       key={i}
-                      className={`w-4 h-4 ${i < Math.round(product.rating) ? 'fill-current' : 'text-gray-300'}`}
+                      className={`w-3.5 h-3.5 ${i < Math.round(product.rating) ? 'fill-current' : 'text-gray-300'}`}
                       viewBox="0 0 20 20"
                     >
                       <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
                     </svg>
                   ))}
                 </div>
-                <span className="text-sm text-gray-500 ml-2">{product.reviewCount} reviews</span>
+                <span className="text-[11px] text-aesop-graphite ml-2 tracking-wide">{product.reviewCount} reviews</span>
               </div>
             )}
 
-            {/* Price */}
-            <div className="flex items-center space-x-2 mb-3">
-              <span className="text-lg font-bold text-gray-900">Rs. {product.price.toFixed(2)}</span>
+            {/* Price - Diptyque style serif */}
+            <div className="flex items-center space-x-2">
+              <span className="font-heading text-base font-medium text-aesop-ink">Rs. {product.price.toFixed(2)}</span>
               {product.originalPrice && product.originalPrice > product.price && (
-                <span className="text-sm text-gray-500 line-through">
+                <span className="text-sm text-aesop-graphite line-through">
                   Rs. {product.originalPrice.toFixed(2)}
                 </span>
               )}
@@ -263,10 +263,10 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
         </Link>
 
-        {/* Add to Cart Button or Quantity Controls - Shopify Style */}
-        <div className="px-4 pb-4">
+        {/* Add to Cart - Diptyque: "Add to bag" simple black/white */}
+        <div className="px-1 pb-5">
           {cartQuantity > 0 ? (
-            <div className="flex items-center justify-between bg-gray-50 rounded-lg border border-gray-200 p-2">
+            <div className="flex items-center justify-between bg-[#f5f3f0] border border-black/10 p-2">
               <button
                 onClick={(e) => handleUpdateQuantity(e, cartQuantity - 1)}
                 disabled={product.soldOut || isUpdating}
@@ -309,12 +309,12 @@ export default function ProductCard({ product }: ProductCardProps) {
             <button
               onClick={handleAddToCart}
               disabled={product.soldOut || isAdding}
-              className={`w-full py-3 rounded-md font-semibold text-sm transition-all duration-200 ${
+              className={`w-full py-3 font-normal text-[11px] tracking-[0.18em] uppercase transition ${
                 product.soldOut
-                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                  ? 'bg-gray-200 text-aesop-graphite cursor-not-allowed'
                   : isAdding
-                  ? 'bg-primary-500 text-white cursor-wait'
-                  : 'bg-primary-600 text-white hover:bg-primary-700 active:scale-[0.98] shadow-sm hover:shadow-md'
+                  ? 'bg-black text-white cursor-wait'
+                  : 'bg-black text-white hover:bg-aesop-graphite active:scale-[0.99]'
               }`}
             >
               {isAdding ? (
@@ -328,12 +328,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               ) : product.soldOut ? (
                 'Sold Out'
               ) : (
-                <span className="flex items-center justify-center">
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  Add to cart
-                </span>
+                'Add to bag'
               )}
             </button>
           )}

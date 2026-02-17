@@ -44,13 +44,13 @@ export default function Testimonials() {
     }
   };
   return (
-    <section className="py-16 bg-gray-50 content-visibility-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-bold text-center mb-12">Fragrances That Leave a Mark</h2>
+    <section className="py-20 md:py-24 bg-white content-visibility-auto">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10">
+        <h2 className="font-heading text-3xl md:text-4xl font-medium text-aesop-ink text-center mb-14 tracking-tight">Fragrances That Leave a Mark</h2>
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-white p-6 rounded-lg shadow-md animate-pulse">
+              <div key={i} className="bg-[#f7f5f3] p-8 animate-pulse">
                 <div className="h-12 bg-gray-200 rounded-full mb-4"></div>
                 <div className="h-4 bg-gray-200 rounded mb-2"></div>
                 <div className="h-4 bg-gray-200 rounded"></div>
@@ -58,11 +58,11 @@ export default function Testimonials() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {testimonials.map((testimonial) => (
               <div
                 key={testimonial._id}
-                className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
+                className="bg-[#f7f5f3] p-8 transition-opacity hover:opacity-95"
               >
                 <div className="flex items-center mb-4">
                   {testimonial.image ? (
@@ -81,13 +81,13 @@ export default function Testimonials() {
                     </div>
                   )}
                   <div>
-                    <h4 className="font-semibold text-gray-900">{testimonial.name}</h4>
+                    <h4 className="font-heading font-medium text-aesop-ink">{testimonial.name}</h4>
                     {testimonial.product && (
-                      <p className="text-xs text-gray-500">{testimonial.product}</p>
+                      <p className="text-xs text-aesop-graphite">{testimonial.product}</p>
                     )}
                   </div>
                 </div>
-                <div className="flex text-yellow-400 mb-2">
+                <div className="flex text-amber-700/70 mb-3">
                   {[...Array(5)].map((_, i) => (
                     <svg
                       key={i}
@@ -98,7 +98,7 @@ export default function Testimonials() {
                     </svg>
                   ))}
                 </div>
-                <p className="text-gray-600 italic">&quot;{testimonial.comment}&quot;</p>
+                <p className="text-aesop-graphite text-sm leading-relaxed">&quot;{testimonial.comment}&quot;</p>
               </div>
             ))}
           </div>

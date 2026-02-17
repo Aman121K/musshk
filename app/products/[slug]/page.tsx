@@ -224,7 +224,7 @@ export default function ProductDetailPage() {
 
         {/* Product Info */}
         <div>
-          <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
+          <h1 className="font-heading text-3xl md:text-4xl font-medium text-aesop-ink mb-4 tracking-aesop-tight">{product.name}</h1>
 
           {product.reviewCount > 0 && (
             <div className="flex items-center mb-4">
@@ -245,7 +245,7 @@ export default function ProductDetailPage() {
 
           <div className="mb-6">
             <div className="flex items-center space-x-2 mb-2">
-              <span className="text-3xl font-bold text-gray-900">Rs. {displayPrice.toFixed(2)}</span>
+              <span className="font-heading text-3xl font-medium text-aesop-ink">Rs. {displayPrice.toFixed(2)}</span>
               {product.originalPrice && product.originalPrice > displayPrice && (
                 <span className="text-lg text-gray-500 line-through">
                   Rs. {product.originalPrice.toFixed(2)}
@@ -357,9 +357,9 @@ export default function ProductDetailPage() {
           <button
             onClick={handleAddToCart}
             disabled={product.soldOut}
-            className={`w-full py-3 rounded-md font-semibold text-lg transition ${product.soldOut
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-primary-600 text-white hover:bg-primary-700'
+            className={`w-full py-3 font-medium text-sm tracking-aesop-wide uppercase transition ${product.soldOut
+                ? 'bg-aesop-stone/20 text-aesop-graphite cursor-not-allowed'
+                : 'bg-aesop-ink text-white hover:bg-aesop-graphite'
               }`}
           >
             {product.soldOut ? 'Sold Out' : 'Add to cart'}
@@ -418,7 +418,7 @@ export default function ProductDetailPage() {
       {/* Related Products */}
       {relatedProducts.length > 0 && (
         <div className="mt-16">
-          <h2 className="text-2xl font-bold mb-8">You may also like</h2>
+          <h2 className="font-heading text-2xl font-medium text-aesop-ink mb-8 tracking-aesop-tight">You may also like</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {relatedProducts.map((relatedProduct) => (
               <ProductCard key={relatedProduct._id} product={relatedProduct} />
