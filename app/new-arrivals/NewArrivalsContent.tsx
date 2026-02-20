@@ -14,7 +14,7 @@ export default function NewArrivalsContent() {
 
   const fetchProducts = async () => {
     try {
-      const url = getApiUrl('products?collection=New Arrivals');
+      const url = getApiUrl('products?limit=500');
       const response = await fetch(url);
       const data = await response.json();
       setProducts(data.products || []);
