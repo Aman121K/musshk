@@ -66,16 +66,7 @@ export default function Header() {
   };
 
   const menuItems: MenuItem[] = [
-    { 
-      name: 'New Arrival', 
-      href: '/new-arrivals', 
-      submenu: [
-        { name: 'All', href: '/new-arrivals' },
-        { name: 'SEPTEMBER - 2025', href: '/new-arrivals?date=SEPTEMBER - 2025' },
-        { name: 'July-2025', href: '/new-arrivals?date=July-2025' },
-        { name: 'MARCH- 2025', href: '/new-arrivals?date=MARCH- 2025' }
-      ]
-    },
+    { name: 'New Arrival', href: '/new-arrivals' },
     { name: 'Niche Edition', href: '/niche-edition' },
     { 
       name: 'Inspired Perfumes', 
