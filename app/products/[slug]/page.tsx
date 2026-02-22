@@ -440,7 +440,7 @@ export default function ProductDetailPage() {
       )}
 
       {/* Fragrance Notes – Aesop-style: full-width sections with heading, text, image below */}
-      {(product.topNotes?.length || product.heartNotes?.length || product.baseNotes?.length || product.otherNotes?.length || product.topNotesImage || product.heartNotesImage || product.baseNotesImage || (product.notes?.length ?? 0)) > 0 && (
+      {Boolean(product.topNotes?.length || product.heartNotes?.length || product.baseNotes?.length || product.otherNotes?.length || product.topNotesImage || product.heartNotesImage || product.baseNotesImage || product.notes?.length) && (
         <section className="border-t border-black/10 pt-16 pb-8">
           <div className="max-w-4xl mx-auto px-4">
             <h2 className="font-heading text-2xl md:text-3xl font-medium text-aesop-ink mb-12 tracking-tight">Fragrance notes</h2>
