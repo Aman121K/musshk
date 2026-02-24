@@ -9,12 +9,23 @@ function OrderSuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
   const [order, setOrder] = useState<any>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     if (orderId) {
       fetchOrder();
     }
   }, [orderId]);
+
+  useEffect(() => {
+    try {
+      const token = localStorage.getItem('token');
+      const userData = localStorage.getItem('user');
+      setIsLoggedIn(Boolean(token && userData));
+    } catch {
+      setIsLoggedIn(false);
+    }
+  }, []);
 
   const fetchOrder = async () => {
     try {
@@ -80,12 +91,21 @@ function OrderSuccessContent() {
               </p>
             </div>
             <div className="mt-4 text-center">
-              <Link
-                href="/account"
-                className="text-primary-600 hover:text-primary-800 font-medium text-sm"
-              >
-                View All Orders →
-              </Link>
+              {isLoggedIn ? (
+                <Link
+                  href="/account"
+                  className="text-primary-600 hover:text-primary-800 font-medium text-sm"
+                >
+                  View All Orders →
+                </Link>
+              ) : (
+                <Link
+                  href="/track-order"
+                  className="text-primary-600 hover:text-primary-800 font-medium text-sm"
+                >
+                  Track your order →
+                </Link>
+              )}
             </div>
           </div>
         </div>

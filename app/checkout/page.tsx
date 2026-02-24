@@ -71,7 +71,6 @@ export default function CheckoutPage() {
   });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [checkingAuth, setCheckingAuth] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<'Online'>('Online');
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [currentStep, setCurrentStep] = useState<'shipping' | 'payment' | 'review'>('shipping');
@@ -79,43 +78,25 @@ export default function CheckoutPage() {
   const { showModal, ModalComponent } = useModal();
 
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-
-    if (!token || !userData) {
-      router.push(`/login?redirect=${encodeURIComponent('/checkout')}`);
-      return;
-    }
-
+    // Guest checkout supported: prefill if user is logged in, but do not require auth
     try {
-      const userObj = JSON.parse(userData);
-      setUser(userObj);
-      
-      setFormData(prev => ({
-        ...prev,
-        name: userObj.name || prev.name,
-        email: userObj.email || prev.email,
-        phone: userObj.phone || prev.phone,
-      }));
-
-      fetchCart();
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        const userObj = JSON.parse(userData);
+        setUser(userObj);
+        setFormData((prev) => ({
+          ...prev,
+          name: userObj.name || prev.name,
+          email: userObj.email || prev.email,
+          phone: userObj.phone || prev.phone,
+        }));
+      }
     } catch (error) {
       console.error('Error parsing user data:', error);
-      router.push(`/login?redirect=${encodeURIComponent('/checkout')}`);
     } finally {
-      setCheckingAuth(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!checkingAuth && user) {
       fetchCart();
     }
-  }, [checkingAuth, user]);
+  }, []);
 
   // Load Razorpay script
   useEffect(() => {
@@ -172,8 +153,8 @@ export default function CheckoutPage() {
         },
         body: JSON.stringify({
           shippingAddress: formData,
-          paymentMethod: 'Online',
-          userId: user.id,
+          paymentMethod: paymentMethod,
+          userId: user?.id || user?._id,
         }),
       });
 
@@ -269,20 +250,15 @@ export default function CheckoutPage() {
             });
             window.dispatchEvent(new Event('cartUpdated'));
             
-            if (verifyData.orderId) {
-              router.push(`/order-success?orderId=${verifyData.orderId}`);
-            } else {
-              setTimeout(() => {
-                router.push(`/account`);
-              }, 2000);
-            }
+            if (verifyData.orderId) router.push(`/order-success?orderId=${verifyData.orderId}`);
+            else router.push('/track-order');
           } else {
             showModal(
               'Payment verification failed. Please contact support. The webhook will process your payment.',
               { type: 'warning', title: 'Payment Verification' }
             );
             setTimeout(() => {
-              router.push(`/account`);
+              router.push('/track-order');
             }, 2000);
           }
         },
@@ -314,7 +290,7 @@ export default function CheckoutPage() {
     }
   };
 
-  if (checkingAuth || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
