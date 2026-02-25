@@ -450,13 +450,13 @@ export default function ProductDetailPage() {
                 <h3 className="font-heading text-lg font-medium text-aesop-ink mb-2 tracking-tight">Top notes</h3>
                 <p className="text-aesop-graphite text-[15px] leading-relaxed mb-6">{product.topNotes.join(', ')}</p>
                 {product.topNotesImage && (
-                  <div className="relative w-full aspect-[4/3] max-h-[400px] bg-[#f5f3f0] overflow-hidden">
+                  <div className="relative w-full h-[220px] sm:h-[300px] md:h-auto md:aspect-[4/3] max-h-[400px] bg-[#f5f3f0] overflow-hidden">
                     <Image
                       src={product.topNotesImage.startsWith('http') ? product.topNotesImage : getImageUrl(product.topNotesImage)}
                       alt="Top notes"
                       fill
                       sizes="(max-width: 768px) 100vw, 896px"
-                      className="object-cover object-center"
+                      className="object-contain md:object-cover object-center"
                     />
                   </div>
                 )}
@@ -468,13 +468,13 @@ export default function ProductDetailPage() {
                 <h3 className="font-heading text-lg font-medium text-aesop-ink mb-2 tracking-tight">Heart notes</h3>
                 <p className="text-aesop-graphite text-[15px] leading-relaxed mb-6">{product.heartNotes.join(', ')}</p>
                 {product.heartNotesImage && (
-                  <div className="relative w-full aspect-[4/3] max-h-[400px] bg-[#f5f3f0] overflow-hidden">
+                  <div className="relative w-full h-[220px] sm:h-[300px] md:h-auto md:aspect-[4/3] max-h-[400px] bg-[#f5f3f0] overflow-hidden">
                     <Image
                       src={product.heartNotesImage.startsWith('http') ? product.heartNotesImage : getImageUrl(product.heartNotesImage)}
                       alt="Heart notes"
                       fill
                       sizes="(max-width: 768px) 100vw, 896px"
-                      className="object-cover object-center"
+                      className="object-contain md:object-cover object-center"
                     />
                   </div>
                 )}
@@ -486,13 +486,13 @@ export default function ProductDetailPage() {
                 <h3 className="font-heading text-lg font-medium text-aesop-ink mb-2 tracking-tight">Base notes</h3>
                 <p className="text-aesop-graphite text-[15px] leading-relaxed mb-6">{product.baseNotes.join(', ')}</p>
                 {product.baseNotesImage && (
-                  <div className="relative w-full aspect-[4/3] max-h-[400px] bg-[#f5f3f0] overflow-hidden">
+                  <div className="relative w-full h-[220px] sm:h-[300px] md:h-auto md:aspect-[4/3] max-h-[400px] bg-[#f5f3f0] overflow-hidden">
                     <Image
                       src={product.baseNotesImage.startsWith('http') ? product.baseNotesImage : getImageUrl(product.baseNotesImage)}
                       alt="Base notes"
                       fill
                       sizes="(max-width: 768px) 100vw, 896px"
-                      className="object-cover object-center"
+                      className="object-contain md:object-cover object-center"
                     />
                   </div>
                 )}
@@ -529,4 +529,3 @@ export default function ProductDetailPage() {
     </div>
   );
 }
-
