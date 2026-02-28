@@ -13,9 +13,13 @@ export const UPLOADS_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, '') || 'https://
  */
 export function getImageUrl(imagePath: string | undefined | null): string {
   if (!imagePath) return '';
-  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
-  const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-  return `${UPLOADS_ORIGIN}${path}`;
+  const cleaned = imagePath.trim().replace(/^['"]|['"]$/g, '');
+  if (!cleaned) return '';
+  if (cleaned.startsWith('data:') || cleaned.startsWith('blob:')) return cleaned;
+  if (cleaned.startsWith('//')) return `https:${cleaned}`;
+  if (cleaned.startsWith('http://') || cleaned.startsWith('https://')) return encodeURI(cleaned);
+  const path = cleaned.startsWith('/') ? cleaned : `/${cleaned}`;
+  return `${UPLOADS_ORIGIN}${encodeURI(path)}`;
 }
 
 /**
@@ -28,4 +32,3 @@ export function getApiUrl(endpoint: string): string {
   const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
   return `${baseUrl}/${cleanEndpoint}`;
 }
-

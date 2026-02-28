@@ -50,6 +50,8 @@ export default function ProductDetailPage() {
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
+  const [failedNoteImages, setFailedNoteImages] = useState<Record<string, boolean>>({});
   const [detailTab, setDetailTab] = useState<'description' | 'ingredients' | 'packaging'>('description');
   const { showToast, ToastComponent } = useToast();
 
@@ -67,10 +69,18 @@ export default function ProductDetailPage() {
   }, [product?._id]);
 
   const normalizeImages = (raw: unknown): string[] => {
-    if (!Array.isArray(raw)) return [];
-    return raw
-      .map((item) => (typeof item === 'string' ? item : (item?.url ?? item?.src ?? '')))
-      .filter((s): s is string => typeof s === 'string' && s.length > 0);
+    const list = Array.isArray(raw) ? raw : raw ? [raw] : [];
+
+    return list
+      .flatMap((item) => {
+        const value = typeof item === 'string' ? item : (item?.url ?? item?.src ?? '');
+        if (typeof value !== 'string' || value.trim().length === 0) return [];
+        return value
+          .split(',')
+          .map((part) => part.trim().replace(/^['"]|['"]$/g, ''))
+          .filter(Boolean);
+      })
+      .filter((img, index, arr) => arr.indexOf(img) === index);
   };
 
   const fetchProduct = async () => {
@@ -88,6 +98,8 @@ export default function ProductDetailPage() {
       };
       setProduct(productData);
       setSelectedImageIndex(0);
+      setFailedImages({});
+      setFailedNoteImages({});
       if (data.sizes && data.sizes.length > 0) {
         setSelectedSize(data.sizes[0].size);
       }
@@ -173,6 +185,12 @@ export default function ProductDetailPage() {
 
   const sizeData = product.sizes?.find(s => s.size === selectedSize);
   const displayPrice = sizeData?.price || product.price;
+  const availableImages = (product.images || [])
+    .map((image) => getImageUrl(image))
+    .filter((src) => src && !failedImages[src]);
+  const currentImageIndex = availableImages.length > 0
+    ? Math.min(selectedImageIndex, availableImages.length - 1)
+    : 0;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -181,9 +199,7 @@ export default function ProductDetailPage() {
         <div>
           <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4 flex items-center justify-center">
             {(() => {
-              const mainSrc = product.images?.length
-                ? getImageUrl(product.images[Math.min(selectedImageIndex, product.images.length - 1)])
-                : '';
+              const mainSrc = availableImages[currentImageIndex] || '';
               if (mainSrc) {
                 return (
                   <Image
@@ -194,7 +210,11 @@ export default function ProductDetailPage() {
                     quality={85}
                     className="object-contain"
                     priority
-                    unoptimized={mainSrc.startsWith('data:')}
+                    unoptimized
+                    onError={() => {
+                      setFailedImages((prev) => ({ ...prev, [mainSrc]: true }));
+                      setSelectedImageIndex(0);
+                    }}
                   />
                 );
               }
@@ -205,11 +225,9 @@ export default function ProductDetailPage() {
               );
             })()}
           </div>
-          {product.images && product.images.length > 1 && (
+          {availableImages.length > 1 && (
             <div className="flex flex-wrap gap-2">
-              {product.images.map((image, index) => {
-                const thumbSrc = getImageUrl(image);
-                if (!thumbSrc) return null;
+              {availableImages.map((thumbSrc, index) => {
                 return (
                   <button
                     key={index}
@@ -226,7 +244,11 @@ export default function ProductDetailPage() {
                       sizes="80px"
                       quality={75}
                       className="object-contain"
-                      unoptimized={thumbSrc.startsWith('data:')}
+                      unoptimized
+                      onError={() => {
+                        setFailedImages((prev) => ({ ...prev, [thumbSrc]: true }));
+                        if (selectedImageIndex >= index) setSelectedImageIndex(0);
+                      }}
                     />
                   </button>
                 );
@@ -451,13 +473,17 @@ export default function ProductDetailPage() {
                 <p className="text-aesop-graphite text-[15px] leading-relaxed mb-6">{product.topNotes.join(', ')}</p>
                 {product.topNotesImage && (
                   <div className="relative w-full h-[220px] sm:h-[300px] md:h-auto md:aspect-[4/3] max-h-[400px] bg-[#f5f3f0] overflow-hidden">
-                    <Image
-                      src={product.topNotesImage.startsWith('http') ? product.topNotesImage : getImageUrl(product.topNotesImage)}
-                      alt="Top notes"
-                      fill
-                      sizes="(max-width: 768px) 100vw, 896px"
-                      className="object-contain md:object-cover object-center"
-                    />
+                    {!failedNoteImages.top && (
+                      <Image
+                        src={product.topNotesImage.startsWith('http') ? product.topNotesImage : getImageUrl(product.topNotesImage)}
+                        alt="Top notes"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 896px"
+                        className="object-contain md:object-cover object-center"
+                        unoptimized
+                        onError={() => setFailedNoteImages((prev) => ({ ...prev, top: true }))}
+                      />
+                    )}
                   </div>
                 )}
               </div>
@@ -469,13 +495,17 @@ export default function ProductDetailPage() {
                 <p className="text-aesop-graphite text-[15px] leading-relaxed mb-6">{product.heartNotes.join(', ')}</p>
                 {product.heartNotesImage && (
                   <div className="relative w-full h-[220px] sm:h-[300px] md:h-auto md:aspect-[4/3] max-h-[400px] bg-[#f5f3f0] overflow-hidden">
-                    <Image
-                      src={product.heartNotesImage.startsWith('http') ? product.heartNotesImage : getImageUrl(product.heartNotesImage)}
-                      alt="Heart notes"
-                      fill
-                      sizes="(max-width: 768px) 100vw, 896px"
-                      className="object-contain md:object-cover object-center"
-                    />
+                    {!failedNoteImages.heart && (
+                      <Image
+                        src={product.heartNotesImage.startsWith('http') ? product.heartNotesImage : getImageUrl(product.heartNotesImage)}
+                        alt="Heart notes"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 896px"
+                        className="object-contain md:object-cover object-center"
+                        unoptimized
+                        onError={() => setFailedNoteImages((prev) => ({ ...prev, heart: true }))}
+                      />
+                    )}
                   </div>
                 )}
               </div>
@@ -487,13 +517,17 @@ export default function ProductDetailPage() {
                 <p className="text-aesop-graphite text-[15px] leading-relaxed mb-6">{product.baseNotes.join(', ')}</p>
                 {product.baseNotesImage && (
                   <div className="relative w-full h-[220px] sm:h-[300px] md:h-auto md:aspect-[4/3] max-h-[400px] bg-[#f5f3f0] overflow-hidden">
-                    <Image
-                      src={product.baseNotesImage.startsWith('http') ? product.baseNotesImage : getImageUrl(product.baseNotesImage)}
-                      alt="Base notes"
-                      fill
-                      sizes="(max-width: 768px) 100vw, 896px"
-                      className="object-contain md:object-cover object-center"
-                    />
+                    {!failedNoteImages.base && (
+                      <Image
+                        src={product.baseNotesImage.startsWith('http') ? product.baseNotesImage : getImageUrl(product.baseNotesImage)}
+                        alt="Base notes"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 896px"
+                        className="object-contain md:object-cover object-center"
+                        unoptimized
+                        onError={() => setFailedNoteImages((prev) => ({ ...prev, base: true }))}
+                      />
+                    )}
                   </div>
                 )}
               </div>
