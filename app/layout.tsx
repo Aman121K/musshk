@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Source_Sans_3, Cormorant_Garamond } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -122,6 +123,15 @@ export default function RootLayout({
         />
       </head>
       <body className={`${sourceSans.variable} ${cormorant.variable} font-sans antialiased`}>
+        <Script async src="https://www.googletagmanager.com/gtag/js?id=G-B3W0GYXZ7Q" />
+        <Script id="google-analytics">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-B3W0GYXZ7Q');
+          `}
+        </Script>
         <VisitorTracker />
         <Header />
         <main className="min-h-screen">{children}</main>
@@ -131,4 +141,3 @@ export default function RootLayout({
     </html>
   );
 }
-
