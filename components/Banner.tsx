@@ -90,6 +90,7 @@ export default function Banner({ position = 'home-top' }: BannerProps) {
             quality={80}
             className="object-contain object-center transition-transform duration-300 group-hover:scale-105"
             priority
+            unoptimized
           />
         </div>
       </Link>

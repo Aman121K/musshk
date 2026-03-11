@@ -232,6 +232,7 @@ export default function CartPage() {
                       sizes="96px"
                       className="object-cover"
                       loading="lazy"
+                      unoptimized
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -316,4 +317,3 @@ export default function CartPage() {
     </div>
   );
 }
-

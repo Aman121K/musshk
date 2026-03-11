@@ -29,6 +29,15 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [cartQuantity, setCartQuantity] = useState(0);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
+
+  const primaryImage = (Array.isArray(product.images) ? product.images : [])
+    .flatMap((item) =>
+      String(item || '')
+        .split(',')
+        .map((part) => part.trim())
+    )
+    .find(Boolean) || '';
 
   useEffect(() => {
     // Initial check
@@ -48,6 +57,10 @@ export default function ProductCard({ product }: ProductCardProps) {
       window.removeEventListener('cartUpdated', handleCartUpdate);
     };
   }, [product._id]);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [product._id, product.images]);
 
   const checkCartQuantity = async () => {
     try {
@@ -201,8 +214,8 @@ export default function ProductCard({ product }: ProductCardProps) {
           {/* Product Image - Diptyque: image-first, minimal frame */}
           <div className="relative aspect-square bg-[#f5f3f0] overflow-hidden">
             {(() => {
-              const imgSrc = product.images?.length ? getImageUrl(product.images[0]) : '';
-              if (imgSrc) {
+              const imgSrc = primaryImage ? getImageUrl(primaryImage) : '';
+              if (imgSrc && !imageFailed) {
                 return (
                   <Image
                     src={imgSrc}
@@ -211,6 +224,8 @@ export default function ProductCard({ product }: ProductCardProps) {
                     sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                     quality={80}
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    unoptimized
+                    onError={() => setImageFailed(true)}
                   />
                 );
               }
@@ -337,4 +352,3 @@ export default function ProductCard({ product }: ProductCardProps) {
     </div>
   );
 }
-

@@ -130,6 +130,7 @@ export default function BlogPage() {
                     sizes="(max-width: 768px) 100vw, 400px"
                     className="object-cover"
                     loading="lazy"
+                    unoptimized
                   />
                 </div>
               ) : (
@@ -169,4 +170,3 @@ export default function BlogPage() {
     </div>
   );
 }
-

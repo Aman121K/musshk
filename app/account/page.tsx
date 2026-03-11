@@ -246,6 +246,7 @@ function AccountContent() {
                                     className="object-cover"
                                     loading="lazy"
                                     onError={() => setFailedOrderImage((prev) => ({ ...prev, [`${order._id}-${index}`]: true }))}
+                                    unoptimized
                                   />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center bg-gray-100">

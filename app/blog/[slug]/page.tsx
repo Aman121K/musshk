@@ -134,6 +134,7 @@ export default function BlogDetailPage() {
             sizes="(max-width: 768px) 100vw, 900px"
             className="object-cover"
             priority={false}
+            unoptimized
           />
         </div>
       )}
@@ -197,4 +198,3 @@ export default function BlogDetailPage() {
     </div>
   );
 }
-

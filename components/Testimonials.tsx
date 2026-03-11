@@ -72,6 +72,7 @@ export default function Testimonials() {
                       width={48}
                       height={48}
                       className="rounded-full object-cover mr-4"
+                      unoptimized
                     />
                   ) : (
                     <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mr-4">
@@ -107,4 +108,3 @@ export default function Testimonials() {
     </section>
   );
 }
-
