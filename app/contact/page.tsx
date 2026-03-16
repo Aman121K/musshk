@@ -19,6 +19,45 @@ export default function ContactPage() {
   const [submitting, setSubmitting] = useState(false);
   const { showToast, ToastComponent } = useToast();
 
+  const getFallbackContentType = (file: File, type: 'image' | 'video') => {
+    if (file.type) return file.type;
+    const lowerName = (file.name || '').toLowerCase();
+    if (type === 'image') {
+      if (lowerName.endsWith('.png')) return 'image/png';
+      if (lowerName.endsWith('.gif')) return 'image/gif';
+      if (lowerName.endsWith('.webp')) return 'image/webp';
+      if (lowerName.endsWith('.heic')) return 'image/heic';
+      if (lowerName.endsWith('.heif')) return 'image/heif';
+      return 'image/jpeg';
+    }
+    if (lowerName.endsWith('.mov')) return 'video/quicktime';
+    if (lowerName.endsWith('.webm')) return 'video/webm';
+    if (lowerName.endsWith('.m4v')) return 'video/x-m4v';
+    if (lowerName.endsWith('.3gp')) return 'video/3gpp';
+    return 'video/mp4';
+  };
+
+  const uploadFilesViaBackend = async (files: File[], type: 'image' | 'video') => {
+    const formData = new FormData();
+    files.forEach((file) => formData.append('files', file));
+
+    const response = await fetch(getApiUrl('upload/contact-media'), {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data?.error || `Failed to upload ${type}s`);
+    }
+
+    const uploadedUrls = (Array.isArray(data?.files) ? data.files : [])
+      .map((file: { url?: string; mediaType?: string }) => file?.url)
+      .filter(Boolean);
+
+    return uploadedUrls as string[];
+  };
+
   const uploadFilesToS3 = async (files: FileList | null, type: 'image' | 'video') => {
     if (!files || files.length === 0) return;
 
@@ -36,31 +75,42 @@ export default function ContactPage() {
     try {
       const selectedFiles = Array.from(files).slice(0, maxCount - currentCount);
       const uploadedUrls: string[] = [];
+      const failedFiles: File[] = [];
 
       for (const file of selectedFiles) {
-        const contentType = file.type || (type === 'image' ? 'image/jpeg' : 'video/mp4');
+        const contentType = getFallbackContentType(file, type);
         const filename = file.name || `${type}-${Date.now()}`;
 
-        const presignRes = await fetch(
-          `${API_BASE_URL}/upload/presign?folder=contact-messages&filename=${encodeURIComponent(filename)}&contentType=${encodeURIComponent(contentType)}`
-        );
-        const presignData = await presignRes.json();
+        try {
+          const presignRes = await fetch(
+            `${API_BASE_URL}/upload/presign?folder=contact-messages&filename=${encodeURIComponent(filename)}&contentType=${encodeURIComponent(contentType)}`
+          );
+          const presignData = await presignRes.json();
 
-        if (!presignRes.ok || !presignData.uploadUrl || !presignData.publicUrl) {
-          throw new Error(presignData?.error || `Failed to prepare ${type} upload`);
+          if (!presignRes.ok || !presignData.uploadUrl || !presignData.publicUrl) {
+            throw new Error(presignData?.error || `Failed to prepare ${type} upload`);
+          }
+
+          const putRes = await fetch(presignData.uploadUrl, {
+            method: 'PUT',
+            body: file,
+            headers: { 'Content-Type': contentType },
+          });
+
+          if (!putRes.ok) {
+            throw new Error(`Failed to upload ${file.name}`);
+          }
+
+          uploadedUrls.push(presignData.publicUrl);
+        } catch (error) {
+          console.error(`Direct upload failed for ${file.name}, falling back to API upload:`, error);
+          failedFiles.push(file);
         }
+      }
 
-        const putRes = await fetch(presignData.uploadUrl, {
-          method: 'PUT',
-          body: file,
-          headers: { 'Content-Type': contentType },
-        });
-
-        if (!putRes.ok) {
-          throw new Error(`Failed to upload ${file.name}`);
-        }
-
-        uploadedUrls.push(presignData.publicUrl);
+      if (failedFiles.length > 0) {
+        const fallbackUrls = await uploadFilesViaBackend(failedFiles, type);
+        uploadedUrls.push(...fallbackUrls);
       }
 
       if (uploadedUrls.length > 0) {
