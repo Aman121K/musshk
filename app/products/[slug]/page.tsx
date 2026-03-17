@@ -409,36 +409,38 @@ export default function ProductDetailPage() {
 
       {/* Description | Ingredients | Packaging and recycling – tabbed section (Aesop-style) */}
       {(product.description?.trim() || product.ingredients?.trim() || product.packagingAndRecycling?.trim()) && (
-        <section className="border-t border-black/10 pt-12 pb-16">
+        <section className="border-t border-black/10 pt-10 md:pt-12 pb-12 md:pb-16">
           <div className="max-w-4xl mx-auto px-4">
-            <div className="flex flex-wrap gap-x-8 gap-y-2 border-b border-black/10 pb-4 mb-8">
-              <button
-                type="button"
-                onClick={() => setDetailTab('description')}
-                className={`font-heading text-base font-medium tracking-tight transition ${
-                  detailTab === 'description' ? 'text-aesop-ink border-b-2 border-aesop-ink -mb-[17px] pb-4' : 'text-aesop-graphite hover:text-aesop-ink border-b-2 border-transparent -mb-[17px] pb-4'
-                }`}
-              >
-                Description
-              </button>
-              <button
-                type="button"
-                onClick={() => setDetailTab('ingredients')}
-                className={`font-heading text-base font-medium tracking-tight transition ${
-                  detailTab === 'ingredients' ? 'text-aesop-ink border-b-2 border-aesop-ink -mb-[17px] pb-4' : 'text-aesop-graphite hover:text-aesop-ink border-b-2 border-transparent -mb-[17px] pb-4'
-                }`}
-              >
-                Ingredients
-              </button>
-              <button
-                type="button"
-                onClick={() => setDetailTab('packaging')}
-                className={`font-heading text-base font-medium tracking-tight transition ${
-                  detailTab === 'packaging' ? 'text-aesop-ink border-b-2 border-aesop-ink -mb-[17px] pb-4' : 'text-aesop-graphite hover:text-aesop-ink border-b-2 border-transparent -mb-[17px] pb-4'
-                }`}
-              >
-                Packaging and recycling
-              </button>
+            <div className="border-b border-black/10 mb-6 md:mb-8 overflow-x-auto">
+              <div className="flex min-w-max gap-8 md:gap-10">
+                <button
+                  type="button"
+                  onClick={() => setDetailTab('description')}
+                  className={`font-heading text-base font-medium tracking-tight transition whitespace-nowrap pb-3 border-b-2 ${
+                    detailTab === 'description' ? 'text-aesop-ink border-aesop-ink' : 'text-aesop-graphite hover:text-aesop-ink border-transparent'
+                  }`}
+                >
+                  Description
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDetailTab('ingredients')}
+                  className={`font-heading text-base font-medium tracking-tight transition whitespace-nowrap pb-3 border-b-2 ${
+                    detailTab === 'ingredients' ? 'text-aesop-ink border-aesop-ink' : 'text-aesop-graphite hover:text-aesop-ink border-transparent'
+                  }`}
+                >
+                  Ingredients
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDetailTab('packaging')}
+                  className={`font-heading text-base font-medium tracking-tight transition whitespace-nowrap pb-3 border-b-2 ${
+                    detailTab === 'packaging' ? 'text-aesop-ink border-aesop-ink' : 'text-aesop-graphite hover:text-aesop-ink border-transparent'
+                  }`}
+                >
+                  Packaging and recycling
+                </button>
+              </div>
             </div>
             <div className="min-h-[120px]">
               {detailTab === 'description' && (
@@ -463,23 +465,23 @@ export default function ProductDetailPage() {
 
       {/* Fragrance Notes – Aesop-style: full-width sections with heading, text, image below */}
       {Boolean(product.topNotes?.length || product.heartNotes?.length || product.baseNotes?.length || product.otherNotes?.length || product.topNotesImage || product.heartNotesImage || product.baseNotesImage || product.notes?.length) && (
-        <section className="border-t border-black/10 pt-16 pb-8">
+        <section className="border-t border-black/10 pt-8 md:pt-16 pb-0 md:pb-8">
           <div className="max-w-4xl mx-auto px-4">
-            <h2 className="font-heading text-2xl md:text-3xl font-medium text-aesop-ink mb-12 tracking-tight">Fragrance notes</h2>
+            <h2 className="font-heading text-2xl md:text-3xl font-medium text-aesop-ink mb-6 md:mb-12 tracking-tight">Fragrance notes</h2>
 
             {product.topNotes && product.topNotes.length > 0 && (
-              <div className="mb-16">
+              <div className="mb-8 md:mb-16">
                 <h3 className="font-heading text-lg font-medium text-aesop-ink mb-2 tracking-tight">Top notes</h3>
-                <p className="text-aesop-graphite text-[15px] leading-relaxed mb-6">{product.topNotes.join(', ')}</p>
+                <p className="text-aesop-graphite text-[15px] leading-relaxed mb-3 md:mb-6">{product.topNotes.join(', ')}</p>
                 {product.topNotesImage && (
-                  <div className="relative w-full h-[220px] sm:h-[300px] md:h-auto md:aspect-[4/3] max-h-[400px] bg-[#f5f3f0] overflow-hidden">
+                  <div className="relative w-full h-[180px] sm:h-[260px] md:h-auto md:aspect-[4/3] max-h-[400px] bg-[#f5f3f0] overflow-hidden">
                     {!failedNoteImages.top && (
                       <Image
                         src={product.topNotesImage.startsWith('http') ? product.topNotesImage : getImageUrl(product.topNotesImage)}
                         alt="Top notes"
                         fill
                         sizes="(max-width: 768px) 100vw, 896px"
-                        className="object-contain md:object-cover object-center"
+                        className="object-cover object-center"
                         unoptimized
                         onError={() => setFailedNoteImages((prev) => ({ ...prev, top: true }))}
                       />
@@ -490,18 +492,18 @@ export default function ProductDetailPage() {
             )}
 
             {product.heartNotes && product.heartNotes.length > 0 && (
-              <div className="mb-16">
+              <div className="mb-8 md:mb-16">
                 <h3 className="font-heading text-lg font-medium text-aesop-ink mb-2 tracking-tight">Heart notes</h3>
-                <p className="text-aesop-graphite text-[15px] leading-relaxed mb-6">{product.heartNotes.join(', ')}</p>
+                <p className="text-aesop-graphite text-[15px] leading-relaxed mb-3 md:mb-6">{product.heartNotes.join(', ')}</p>
                 {product.heartNotesImage && (
-                  <div className="relative w-full h-[220px] sm:h-[300px] md:h-auto md:aspect-[4/3] max-h-[400px] bg-[#f5f3f0] overflow-hidden">
+                  <div className="relative w-full h-[180px] sm:h-[260px] md:h-auto md:aspect-[4/3] max-h-[400px] bg-[#f5f3f0] overflow-hidden">
                     {!failedNoteImages.heart && (
                       <Image
                         src={product.heartNotesImage.startsWith('http') ? product.heartNotesImage : getImageUrl(product.heartNotesImage)}
                         alt="Heart notes"
                         fill
                         sizes="(max-width: 768px) 100vw, 896px"
-                        className="object-contain md:object-cover object-center"
+                        className="object-cover object-center"
                         unoptimized
                         onError={() => setFailedNoteImages((prev) => ({ ...prev, heart: true }))}
                       />
@@ -512,18 +514,18 @@ export default function ProductDetailPage() {
             )}
 
             {product.baseNotes && product.baseNotes.length > 0 && (
-              <div className="mb-16">
+              <div className="mb-8 md:mb-16">
                 <h3 className="font-heading text-lg font-medium text-aesop-ink mb-2 tracking-tight">Base notes</h3>
-                <p className="text-aesop-graphite text-[15px] leading-relaxed mb-6">{product.baseNotes.join(', ')}</p>
+                <p className="text-aesop-graphite text-[15px] leading-relaxed mb-3 md:mb-6">{product.baseNotes.join(', ')}</p>
                 {product.baseNotesImage && (
-                  <div className="relative w-full h-[220px] sm:h-[300px] md:h-auto md:aspect-[4/3] max-h-[400px] bg-[#f5f3f0] overflow-hidden">
+                  <div className="relative w-full h-[180px] sm:h-[260px] md:h-auto md:aspect-[4/3] max-h-[400px] bg-[#f5f3f0] overflow-hidden">
                     {!failedNoteImages.base && (
                       <Image
                         src={product.baseNotesImage.startsWith('http') ? product.baseNotesImage : getImageUrl(product.baseNotesImage)}
                         alt="Base notes"
                         fill
                         sizes="(max-width: 768px) 100vw, 896px"
-                        className="object-contain md:object-cover object-center"
+                        className="object-cover object-center"
                         unoptimized
                         onError={() => setFailedNoteImages((prev) => ({ ...prev, base: true }))}
                       />
@@ -549,7 +551,7 @@ export default function ProductDetailPage() {
 
       {/* Related Products */}
       {relatedProducts.length > 0 && (
-        <div className="mt-16">
+        <div className="mt-10 md:mt-16">
           <h2 className="font-heading text-2xl font-medium text-aesop-ink mb-8 tracking-aesop-tight">You may also like</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {relatedProducts.map((relatedProduct) => (

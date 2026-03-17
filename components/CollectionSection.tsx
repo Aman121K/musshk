@@ -5,11 +5,18 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getApiUrl, getImageUrl } from '@/lib/api';
 
-interface HomeCollectionConfig {
+interface CategoryProductRef {
+  _id?: string;
+}
+
+interface CategoryItem {
+  _id: string;
   slug: string;
-  defaultName: string;
-  href: string;
-  queries: string[];
+  name?: string;
+  image?: string;
+  featured?: boolean;
+  order?: number;
+  productIds?: Array<string | CategoryProductRef>;
 }
 
 interface RenderCollection {
@@ -19,90 +26,61 @@ interface RenderCollection {
   imageUrl: string;
 }
 
-const homeCollections: HomeCollectionConfig[] = [
-  { slug: 'best-seller', defaultName: 'Best Seller', href: '/best-seller', queries: ['bestSeller=true&limit=1', 'collection=Best%20Seller&limit=1'] },
-  { slug: 'niche-edition', defaultName: 'Niche Edition', href: '/niche-edition', queries: ['collection=Niche%20Edition&limit=1'] },
-  { slug: 'inspired-perfumes', defaultName: 'Inspired Perfumes', href: '/inspired-perfumes', queries: ['collection=Inspired%20Perfumes&limit=1'] },
-  { slug: 'new-arrivals', defaultName: 'New Arrivals', href: '/new-arrivals', queries: ['newArrival=true&limit=1', 'collection=New%20Arrivals&limit=1'] },
-];
-
-const homeCollectionSlugs = new Set(homeCollections.map((item) => item.slug));
+function productIdCount(category: CategoryItem): number {
+  if (!Array.isArray(category.productIds)) return 0;
+  return category.productIds
+    .map((p) => (typeof p === 'string' ? p : p?._id || ''))
+    .filter(Boolean).length;
+}
 
 export default function CollectionSection() {
   const [collectionsToRender, setCollectionsToRender] = useState<RenderCollection[]>([]);
   const [failed, setFailed] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    const fetchImages = async () => {
-      let categoryMap: Record<string, { name?: string; image?: string }> = {};
-
+    const fetchCollections = async () => {
       try {
         const categoryRes = await fetch(getApiUrl('categories'));
+        if (!categoryRes.ok) {
+          throw new Error(`Failed categories API: ${categoryRes.status}`);
+        }
         const categoryData = await categoryRes.json();
-        if (Array.isArray(categoryData)) {
-          categoryMap = categoryData
-            .filter((category) => category?.slug && homeCollectionSlugs.has(category.slug))
-            .reduce((acc, category) => {
-              acc[category.slug] = {
-                name: category?.name,
-                image: category?.image ? getImageUrl(category.image) : '',
-              };
-              return acc;
-            }, {} as Record<string, { name?: string; image?: string }>);
+        const categories: CategoryItem[] = Array.isArray(categoryData) ? categoryData : [];
+
+        const sortedCategories = categories
+          .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+
+        const collections: RenderCollection[] = [];
+
+        for (const category of sortedCategories) {
+          const slug = String(category.slug || '').trim();
+          if (!slug) continue;
+
+          // Strictly admin-driven: show only categories having assigned products.
+          if (productIdCount(category) === 0) continue;
+
+          collections.push({
+            slug,
+            name: (category.name || '').trim() || slug.replace(/-/g, ' '),
+            href: `/category/${slug}`,
+            imageUrl: category.image ? getImageUrl(category.image) : '',
+          });
         }
-      } catch {
-        // ignore category config failure and use defaults
+        console.log('[CollectionSection] categories from API:', categories);
+        console.log('[CollectionSection] collections to render:', collections);
+        console.log("data from website>>>", collections);
+
+        setCollectionsToRender(collections);
+      } catch (error) {
+        console.error('[CollectionSection] failed to load collections:', error);
+        setCollectionsToRender([]);
       }
-
-      const availableCollections: RenderCollection[] = [];
-      for (const col of homeCollections) {
-        let productImage = '';
-        let hasProducts = false;
-
-        for (const query of col.queries) {
-          try {
-            const res = await fetch(getApiUrl(`products?${query}`));
-            const data = await res.json();
-            const product = data.products?.[0];
-            const src = product?.images?.[0];
-            if (product) {
-              hasProducts = true;
-            }
-            if (src && !productImage) {
-              productImage = getImageUrl(src);
-            }
-            if (hasProducts && productImage) {
-              break;
-            }
-          } catch {
-            // try next query
-          }
-        }
-
-        if (!hasProducts) {
-          continue;
-        }
-
-        const adminCategory = categoryMap[col.slug];
-        const imageUrl = adminCategory?.image || productImage;
-
-        availableCollections.push({
-          slug: col.slug,
-          name: adminCategory?.name?.trim() || col.defaultName,
-          href: col.href,
-          imageUrl,
-        });
-      }
-
-      setCollectionsToRender(availableCollections);
     };
 
-    fetchImages();
+    fetchCollections();
   }, []);
 
-  if (collectionsToRender.length === 0) {
-    return null;
-  }
+  if (collectionsToRender.length === 0) return null;
 
   return (
     <section className="py-20 md:py-24 bg-[#f7f5f3] content-visibility-auto">
@@ -127,7 +105,7 @@ export default function CollectionSection() {
                       sizes="(max-width: 768px) 50vw, 25vw"
                       quality={80}
                       unoptimized
-                      onError={() => setFailed((f) => ({ ...f, [collection.slug]: true }))}
+                      onError={() => setFailed((prev) => ({ ...prev, [collection.slug]: true }))}
                     />
                   )}
                   {showPlaceholder && (
